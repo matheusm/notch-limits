@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>notch-limits: Claude Code &amp; Codex usage limits in your Mac's notch</title>
+<meta name="description" content="Free, open-source macOS app that shows your Claude Code and OpenAI Codex usage limits (5-hour session, weekly, per-model) as progress rings around the MacBook notch. Multiple accounts, local-first, native SwiftUI.">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="notch-limits: Claude Code & Codex usage limits, right at your Mac's notch">
+<meta property="og:description" content="One ring per account around the MacBook notch. Hover for every limit and when it resets. Free and open source.">
+<meta property="og:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ground: #060708;
+  --ground-lift: #101215;
+  --ink: #f5f5f7;
+  --ink-2: #a1a1a8;
+  --ink-3: #6e6e76;
+  --hair: rgba(255, 255, 255, .08);
+  --pill: #000;
+  --ring: #d1d1d1;
+  --track: rgba(255, 255, 255, .22);
+  --warn: #ff9f0a;
+  --crit: #ff453a;
+  --spring: cubic-bezier(.32, 1.28, .52, 1);
+  --out: cubic-bezier(.16, 1, .3, 1);
+  --bar-h: 34px;
+  --notch-w: 186px;
+  --ear: 58px;
+  --panel-w: min(416px, calc(100vw - 20px));
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--ground); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 620px at 50% -140px, #17191d 0%, transparent 70%),
+    var(--ground);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+::selection { background: rgba(209, 209, 209, .28); color: #fff; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 8px; }
+html { scrollbar-color: #2a2c30 var(--ground); }
+a { color: inherit; text-underline-offset: .22em; text-decoration-color: rgba(255, 255, 255, .3); }
+a:hover { text-decoration-color: currentColor; }
+code, pre, .mono { font-family: "Geist Mono", ui-monospace, SFMono-Regular, monospace; font-variant-numeric: tabular-nums; }
+
+/* ── Menu bar ─────────────────────────────────────────── */
+.menubar {
+  position: fixed; inset: 0 0 auto 0; z-index: 20;
+  height: var(--bar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px;
+  background: rgba(10, 11, 13, .62);
+  backdrop-filter: saturate(160%) blur(18px);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+  font-size: 13px; font-weight: 500;
+}
+.menubar__side { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.menubar__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; }
+.menubar__brand img { width: 18px; height: 18px; border-radius: 4px; }
+.menubar a.item { text-decoration: none; color: var(--ink-2); transition: color .2s; }
+.menubar a.item:hover { color: var(--ink); }
+.menubar .get {
+  text-decoration: none; color: #000; background: var(--ink);
+  padding: 3px 10px; border-radius: 6px; font-weight: 600;
+}
+.menubar .get:hover { background: #fff; }
+
+/* ── Notch ────────────────────────────────────────────── */
+.notch {
+  position: fixed; top: 0; left: 50%; z-index: 30;
+  transform: translateX(-50%);
+  width: calc(var(--notch-w) + var(--ear) * 2);
+  background: var(--pill);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: width .55s var(--spring), border-radius .45s var(--out), box-shadow .45s var(--out);
+  -webkit-tap-highlight-color: transparent;
+}
+.notch.is-open {
+  width: var(--panel-w);
+  border-radius: 0 0 26px 26px;
+  box-shadow: 0 22px 48px -12px rgba(0, 0, 0, .8), 0 2px 0 rgba(255, 255, 255, .03) inset;
+  cursor: default;
+}
+.notch:focus-visible { outline-offset: 4px; border-radius: 0 0 14px 14px; }
+.notch__bar {
+  height: var(--bar-h);
+  display: grid; grid-template-columns: var(--ear) 1fr var(--ear);
+  align-items: center;
+  width: calc(var(--notch-w) + var(--ear) * 2);
+  margin: 0 auto;
+  transition: opacity .25s;
+}
+.notch.is-open .notch__bar { opacity: 0; }
+.ear { display: flex; justify-content: center; gap: 5px; }
+.ear .ring { width: 19px; height: 19px; }
+
+.notch__panel {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows .55s var(--spring);
+}
+.notch.is-open .notch__panel { grid-template-rows: 1fr; }
+.notch__panel > div { min-height: 0; }
+.panel {
+  width: var(--panel-w);
+  padding: 4px 20px 16px;
+  opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top center;
+  transition: opacity .3s var(--out), transform .45s var(--out);
+}
+.notch.is-open .panel { opacity: 1; transform: none; transition-delay: .08s; }
+
+.acct { display: grid; grid-template-columns: 36px 1fr; gap: 14px; padding: 12px 0; }
+.acct + .acct { border-top: 1px solid var(--hair); }
+.acct > .ring { width: 36px; height: 36px; }
+.acct__head { display: flex; align-items: baseline; gap: 7px; }
+.acct__name { font-size: 13.5px; font-weight: 600; }
+.acct__plan { font-size: 9.5px; font-weight: 600; letter-spacing: .06em; color: var(--ink-3); }
+.acct__peak { margin-left: auto; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.acct__age { font-size: 10.5px; color: var(--ink-3); margin: 0 0 7px; }
+.win { display: grid; grid-template-columns: 48px 1fr 34px 104px; align-items: center; gap: 9px; font-size: 11px; line-height: 1.9; }
+.win__label { color: var(--ink-3); }
+.win__pct { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.win__reset { text-align: right; color: var(--ink-3); font-size: 10.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--ring); transition: width 1.1s var(--out) .25s; }
+.is-live .bar i { width: calc(var(--p) * 1%); }
+.is-warn { color: var(--warn); } .bar i.is-warn { background: var(--warn); }
+.is-crit { color: var(--crit); } .bar i.is-crit { background: var(--crit); }
+.panel__foot { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 10.5px; color: var(--ink-3); }
+.panel__foot span:last-child { display: flex; gap: 6px; }
+.chip { padding: 2px 8px; border-radius: 99px; background: rgba(255, 255, 255, .1); color: var(--ink); font-weight: 500; }
+
+/* Ring */
+.ring { display: block; overflow: visible; }
+.ring .track { fill: none; stroke: var(--track); stroke-width: 3.2; }
+.ring .fill {
+  fill: none; stroke: var(--ring); stroke-width: 3.2; stroke-linecap: round;
+  stroke-dasharray: 0 100; transform: rotate(-90deg); transform-origin: 50% 50%;
+  transition: stroke-dasharray 1.3s var(--out);
+}
+.is-live .notch .ring .fill, .is-in .ring .fill { stroke-dasharray: var(--p) 100; }
+.ring.is-warn .fill { stroke: var(--warn); }
+.ring.is-crit .fill { stroke: var(--crit); }
+.ring .glyph { fill: #fff; }
+.ring .glyph--stroke { fill: none; stroke: #fff; stroke-width: 1.7; }
+
+.hint {
+  position: fixed; top: calc(var(--bar-h) + 12px); left: 50%; z-index: 19;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--ink-2);
+  opacity: 0; transition: opacity .4s var(--out), transform .4s var(--out);
+  pointer-events: none;
+}
+.hint svg { width: 12px; height: 12px; animation: nudge 1.6s var(--out) infinite; }
+.hint.is-shown { opacity: 1; }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* ── Layout ───────────────────────────────────────────── */
+main { overflow-x: clip; }
+.wrap { width: min(1080px, calc(100vw - 40px)); margin: 0 auto; }
+section { padding: clamp(88px, 13vw, 150px) 0 0; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035em; font-weight: 700; }
+.lede { font-size: clamp(17px, 1.6vw, 19px); color: var(--ink-2); max-width: 58ch; margin: 18px 0 0; }
+
+/* Hero */
+.hero { padding-top: calc(var(--bar-h) + 452px); text-align: center; }
+.hero h1 {
+  font-size: clamp(54px, 10.4vw, 124px);
+  line-height: .95; letter-spacing: -.04em; font-weight: 700;
+}
+.hero .sub { font-size: clamp(19px, 2.2vw, 26px); line-height: 1.35; color: var(--ink-2); margin: 20px auto 0; max-width: 24ch; letter-spacing: -.01em; }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 38px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  height: 48px; padding: 0 22px; border-radius: 13px;
+  font: 600 15px/1 "Geist", sans-serif; text-decoration: none;
+  transition: transform .2s var(--out), background .2s, box-shadow .2s;
+}
+.btn svg { width: 17px; height: 17px; }
+.btn--primary { background: var(--ink); color: #000; box-shadow: 0 10px 30px -10px rgba(255, 255, 255, .35); }
+.btn--primary:hover { background: #fff; transform: translateY(-1px); }
+.btn--ghost { color: var(--ink); background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.btn--ghost:hover { background: rgba(255, 255, 255, .1); }
+.btn:active { transform: translateY(1px); }
+.meta { margin-top: 16px; font-size: 13px; color: var(--ink-3); text-wrap: balance; }
+
+.cmd {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 100%; margin: 34px auto 0; width: fit-content; min-width: 0;
+  padding: 10px 10px 10px 18px;
+  border-radius: 13px; background: var(--ground-lift);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07);
+  font-size: 13.5px; text-align: left;
+}
+.cmd code { min-width: 0; color: var(--ink-2); white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+.cmd code b { color: var(--ink-3); font-weight: 400; user-select: none; }
+.copy {
+  flex: none; font: 500 12px/1 "Geist", sans-serif; color: var(--ink);
+  background: rgba(255, 255, 255, .08); border: 0; border-radius: 8px;
+  padding: 8px 11px; cursor: pointer; transition: background .2s;
+}
+.copy:hover { background: rgba(255, 255, 255, .14); }
+
+/* Glance */
+.glance { text-align: center; }
+.glance .lede { margin-inline: auto; }
+.bigpill {
+  margin: 64px auto 0; width: fit-content;
+  display: flex; align-items: center; gap: clamp(28px, 6vw, 72px);
+  padding: 22px clamp(28px, 5vw, 48px) 24px;
+  background: var(--pill); border-radius: 0 0 34px 34px;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .9);
+  position: relative;
+}
+.bigpill::before {
+  content: ""; position: absolute; left: -60px; right: -60px; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .14), transparent);
+}
+.bigpill figure { margin: 0; display: grid; justify-items: center; gap: 12px; }
+.bigpill .ring { width: clamp(52px, 8vw, 76px); height: clamp(52px, 8vw, 76px); }
+.bigpill figcaption { font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+.bigpill figcaption b { display: block; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bigpill .gap { width: clamp(40px, 9vw, 120px); align-self: stretch; }
+.states { display: flex; justify-content: center; gap: 28px; margin-top: 40px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+.states span { display: flex; align-items: center; gap: 9px; }
+.states .ring { width: 22px; height: 22px; }
+
+/* Split sections */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: clamp(36px, 6vw, 84px); align-items: center; }
+.points { list-style: none; padding: 0; margin: 30px 0 0; display: grid; gap: 16px; }
+.points li { display: grid; grid-template-columns: 20px 1fr; gap: 12px; color: var(--ink-2); font-size: 15.5px; }
+.points li strong { color: var(--ink); font-weight: 600; }
+.points svg { width: 18px; height: 18px; margin-top: 3px; color: var(--ring); }
+
+.flow {
+  border-radius: 16px; background: var(--ground-lift);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 30px 60px -30px rgba(0, 0, 0, .8);
+  padding: 22px; font-size: 12.5px; line-height: 1.6;
+}
+.flow__src { display: grid; gap: 10px; }
+.flow__row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: baseline; padding: 11px 14px; border-radius: 10px; background: rgba(255, 255, 255, .035); }
+.flow__row code { color: var(--ink); overflow-wrap: anywhere; }
+.flow__row span { color: var(--ink-3); font-size: 11.5px; text-align: right; }
+.flow__arrow { display: flex; align-items: center; gap: 10px; color: var(--ink-3); padding: 14px 4px; font-size: 11.5px; }
+.flow__arrow::before, .flow__arrow::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+.flow__api { display: grid; gap: 6px; padding: 11px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); color: var(--ink-2); }
+.flow__api code { color: var(--ink-2); overflow-wrap: anywhere; }
+
+pre.code {
+  margin: 0; padding: 22px 24px; border-radius: 16px; overflow-x: auto;
+  background: var(--ground-lift); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+  font-size: 12.5px; line-height: 1.75; color: var(--ink-2);
+}
+pre.code .k { color: var(--ink); }
+pre.code .s { color: #c9c9ce; }
+pre.code .c { color: var(--ink-3); }
+pre.code + pre.code { margin-top: 12px; }
+
+/* Install */
+.install { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 52px; border-top: 1px solid var(--hair); }
+.way { padding: 30px 28px 0 0; }
+.way + .way { padding-left: 28px; border-left: 1px solid var(--hair); }
+.way h3 { font-size: 19px; letter-spacing: -.015em; font-weight: 600; }
+.way p { color: var(--ink-2); font-size: 14.5px; margin: 10px 0 18px; }
+.way .note { font-size: 13px; color: var(--ink-3); margin: 14px 0 0; }
+.way .cmd { margin: 0; width: 100%; }
+.way .cmd code { font-size: 12px; white-space: normal; word-break: break-all; }
+.way pre.code { white-space: pre-wrap; word-break: break-all; padding: 18px 20px; }
+.links { display: flex; gap: 16px; font-size: 13.5px; color: var(--ink-2); margin-top: 14px; }
+.req { margin-top: 44px; font-size: 13.5px; color: var(--ink-3); }
+
+footer { margin-top: clamp(100px, 14vw, 160px); padding: 28px 0 44px; border-top: 1px solid var(--hair); font-size: 13px; color: var(--ink-3); }
+footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+footer .brand { display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
+footer img { width: 22px; height: 22px; border-radius: 5px; }
+
+/* Reveal: content is visible by default, motion only enhances */
+.reveal { transition: opacity .9s var(--out), transform .9s var(--out); }
+.js .reveal:not(.is-in) { opacity: 0; transform: translateY(18px); }
+
+@media (max-width: 860px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .install { grid-template-columns: minmax(0, 1fr); }
+  .way, .way + .way { padding: 26px 0 0; border-left: 0; }
+  .way + .way { margin-top: 26px; border-top: 1px solid var(--hair); }
+  .menubar .item { display: none; }
+}
+@media (max-width: 520px) {
+  :root { --notch-w: 92px; --ear: 50px; }
+  .flow__row { grid-template-columns: 1fr; gap: 2px; }
+  .flow__row span { text-align: left; }
+  .menubar__brand span { display: none; }
+  .hero { padding-top: calc(var(--bar-h) + 448px); }
+  .win { grid-template-columns: 42px 1fr 32px 96px; gap: 7px; }
+  .hero .cmd { width: 100%; }
+  pre.code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; padding: 18px; }
+  .panel { padding-inline: 16px; }
+  .acct { gap: 12px; }
+  .bigpill .gap { width: 18px; }
+  .cmd code { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+<!--
+THESIS: The website is the top of your MacBook screen. The notch at the top of the browser IS the product, open on arrival, retracting into rings as you scroll; it refuses the category's hero-plus-screenshot-plus-feature-grid.
+OWN-WORLD: Near-black ground (#060708), black pill (#000), light-gray rings (#d1d1d1) on translucent track, white abstract glyphs, Geist display/body, Geist Mono only for real paths and commands; orange/red only as warning states; macOS menu bar as navigation.
+STORY: Visitor sees their limits UI live at the notch, understands one ring per account and hover for detail, trusts local-first and read-only, downloads the DMG or copies the one-liner.
+FIRST VIEWPORT: Menu bar (brand left, Download right) with the expanded notch panel centered beneath it (3 accounts, demo data); below, huge "notch-limits", gray subtitle, Download for macOS primary + GitHub ghost, curl one-liner.
+FORM: User-pinned banner world (macOS notch / menu bar grammar); no concept roll, pinned brief. Seed: pinned-banner.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="#top"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+    <a class="item" href="#glance">How it reads</a>
+    <a class="item" href="#local">Local-first</a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="#install">Download</a>
+  </div>
+</header>
+
+<div class="notch is-open" id="notch" role="button" tabindex="0" aria-expanded="true" aria-controls="notch-panel" aria-label="Notch Limits demo panel. Press to expand or collapse.">
+  <div class="notch__bar" aria-hidden="true">
+    <div class="ear"><span class="ring" data-g="claude" data-p="64"></span><span class="ring" data-g="leaf" data-p="27"></span></div>
+    <div></div>
+    <div class="ear"><span class="ring" data-g="codex" data-p="91"></span></div>
+  </div>
+  <div class="notch__panel" id="notch-panel">
+    <div>
+      <div class="panel">
+        <div class="acct">
+          <span class="ring" data-g="claude" data-p="64"></span>
+          <div>
+            <div class="acct__head"><span class="acct__name">Claude Personal</span><span class="acct__plan">MAX 20X</span><span class="acct__peak">64%</span></div>
+            <p class="acct__age">updated just now</p>
+            <div class="win"><span class="win__label">5h</span><span class="bar"><i style="--p:38"></i></span><span class="win__pct">38%</span><span class="win__reset">in 2h10</span></div>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i style="--p:64"></i></span><span class="win__pct">64%</span><span class="win__reset">Fri 10:00 PM</span></div>
+          </div>
+        </div>
+        <div class="acct">
+          <span class="ring" data-g="leaf" data-p="27"></span>
+          <div>
+            <div class="acct__head"><span class="acct__name">Claude Work</span><span class="acct__plan">TEAM 5X</span><span class="acct__peak">27%</span></div>
+            <p class="acct__age">updated 2 min ago</p>
+            <div class="win"><span class="win__label">5h</span><span class="bar"><i style="--p:12"></i></span><span class="win__pct">12%</span><span class="win__reset">in 4h05</span></div>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i style="--p:27"></i></span><span class="win__pct">27%</span><span class="win__reset">tomorrow 11:00 AM</span></div>
+          </div>
+        </div>
+        <div class="acct">
+          <span class="ring" data-g="codex" data-p="91"></span>
+          <div>
+            <div class="acct__head"><span class="acct__name">Codex</span><span class="acct__plan">PRO</span><span class="acct__peak is-crit">91%</span></div>
+            <p class="acct__age">updated just now</p>
+            <div class="win"><span class="win__label">5h</span><span class="bar"><i class="is-crit" style="--p:91"></i></span><span class="win__pct is-crit">91%</span><span class="win__reset">in 38min</span></div>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i class="is-warn" style="--p:72"></i></span><span class="win__pct is-warn">72%</span><span class="win__reset">Wed 9:00 AM</span></div>
+          </div>
+        </div>
+        <div class="panel__foot"><span>Live demo · sample data</span><span><span class="chip">Login</span><span class="chip">Notch</span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="hint" id="hint"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10.5v-9M2 5.5l4-4 4 4"/></svg><span id="hint-text">Hover the notch</span></p>
+
+<main id="top">
+  <section class="hero wrap">
+    <h1>notch-limits</h1>
+    <p class="sub">Claude Code &amp; Codex usage limits, right at your Mac's notch.</p>
+    <div class="cta">
+      <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+        Download for macOS
+      </a>
+      <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="meta">Free &amp; open source · macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB</p>
+    <div class="cmd">
+      <code><b>$ </b>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+      <button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+    </div>
+  </section>
+
+  <section class="glance wrap" id="glance">
+    <h2 class="reveal">One ring per account.</h2>
+    <p class="lede reveal">Each ring fills with the limit you'll hit first, the highest of that account's 5-hour session, weekly and per-model windows. Hover the notch to see every window, its percentage and exactly when it resets.</p>
+    <div class="bigpill reveal" aria-label="Collapsed notch with three account rings">
+      <figure><span class="ring" data-g="claude" data-p="64"></span><figcaption><b>64%</b>Claude Personal</figcaption></figure>
+      <figure><span class="ring" data-g="leaf" data-p="27"></span><figcaption><b>27%</b>Claude Work</figcaption></figure>
+      <div class="gap" aria-hidden="true"></div>
+      <figure><span class="ring" data-g="codex" data-p="91"></span><figcaption><b>91%</b>Codex</figcaption></figure>
+    </div>
+    <div class="states reveal">
+      <span><span class="ring" data-g="none" data-p="40"></span>Gray while you're fine</span>
+      <span><span class="ring" data-g="none" data-p="76"></span>Orange from 70%</span>
+      <span><span class="ring" data-g="none" data-p="94"></span>Red from 90%</span>
+    </div>
+  </section>
+
+  <section class="wrap" id="local">
+    <div class="split">
+      <div>
+        <h2 class="reveal">Local-first. Quiet on the network.</h2>
+        <p class="lede reveal">Claude Code and Codex already write your usage to disk. notch-limits reads those snapshots first and only asks the official usage endpoint when the newest data is more than 10 minutes old.</p>
+        <ul class="points reveal">
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Opening the panel never makes a request.</strong> It just re-reads local files.</span></li>
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Credentials are read, never written.</strong> It reuses the login your CLIs keep in the Keychain and <code>auth.json</code>.</span></li>
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>No servers, no telemetry.</strong> Tokens only ever go to Anthropic or OpenAI.</span></li>
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Every account shows its data age</strong>, and the label turns orange after 15 minutes.</span></li>
+        </ul>
+      </div>
+      <div class="flow reveal" aria-label="Where notch-limits reads usage from">
+        <div class="flow__src">
+          <div class="flow__row"><code>~/.claude.json</code><span>written by Claude Code</span></div>
+          <div class="flow__row"><code>~/.claude-work/.claude.json</code><span>one per CLAUDE_CONFIG_DIR</span></div>
+          <div class="flow__row"><code>~/.codex/sessions/**/*.jsonl</code><span>written on every Codex reply</span></div>
+        </div>
+        <div class="flow__arrow">only if older than 10 min</div>
+        <div class="flow__api">
+          <code>api.anthropic.com/api/oauth/usage</code>
+          <code>chatgpt.com/backend-api/wham/usage</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="accounts">
+    <div class="split">
+      <div>
+        <h2 class="reveal">Every account you juggle.</h2>
+        <p class="lede reveal">Personal Max, a work Team plan, a ChatGPT plan for Codex: list them once and each gets its own ring and its own icon. Any SF Symbol works.</p>
+      </div>
+      <div class="reveal">
+<pre class="code"><span class="c">// ~/.config/notch-limits/accounts.json</span>
+[
+  { <span class="k">"name"</span>: <span class="s">"Claude Personal"</span>,
+    <span class="k">"provider"</span>: <span class="s">"claude"</span>, <span class="k">"path"</span>: <span class="s">"~/.claude"</span> },
+  { <span class="k">"name"</span>: <span class="s">"Claude Work"</span>, <span class="k">"icon"</span>: <span class="s">"leaf.fill"</span>,
+    <span class="k">"provider"</span>: <span class="s">"claude"</span>, <span class="k">"path"</span>: <span class="s">"~/.claude-work"</span> },
+  { <span class="k">"name"</span>: <span class="s">"Codex"</span>,
+    <span class="k">"provider"</span>: <span class="s">"codex"</span>, <span class="k">"path"</span>: <span class="s">"~/.codex"</span> }
+]</pre>
+<pre class="code"><span class="c"># ~/.zshrc: one login per config dir</span>
+<span class="k">alias</span> claude-work=<span class="s">'CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="install">
+    <h2 class="reveal">Install in a minute.</h2>
+    <p class="lede reveal">A 1.7 MB universal app that lives in the notch and falls back to the menu bar on Macs without one. English, Português and Español.</p>
+    <div class="install reveal">
+      <div class="way">
+        <h3>Download the app</h3>
+        <p>Open the DMG and drag Notch Limits to Applications.</p>
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          NotchLimits.dmg
+        </a>
+        <div class="links"><a href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.zip">.zip</a><a href="https://github.com/matheusm/notch-limits/releases/latest">Release notes</a></div>
+        <p class="note">Not notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+      </div>
+      <div class="way">
+        <h3>One-line install</h3>
+        <p>Downloads the latest release into ~/Applications and opens it. No Gatekeeper prompt.</p>
+        <div class="cmd">
+          <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+          <button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+        </div>
+        <p class="note"><a href="https://github.com/matheusm/notch-limits/blob/main/install.sh">Read the script</a> before piping it to bash.</p>
+      </div>
+      <div class="way">
+        <h3>Build from source</h3>
+        <p>Pure Swift and SwiftUI, no dependencies. Needs the Xcode Command Line Tools.</p>
+<pre class="code"><span class="k">git clone</span> https://github.com/matheusm/notch-limits
+<span class="k">cd</span> notch-limits && ./build.sh</pre>
+      </div>
+    </div>
+    <p class="req reveal">Requires macOS 14 Sonoma or later and a Claude Code (Pro, Max or Team) and/or Codex (ChatGPT) login.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  document.documentElement.classList.add("js");
+  const glyphs = {
+    claude: '<use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/>',
+    leaf: '<use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/>',
+    codex: '<use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/>',
+    none: ""
+  };
+  // anel: trilho + progresso + logo no meio; cor só como alerta (70% laranja, 90% vermelho)
+  document.querySelectorAll("span.ring").forEach(el => {
+    const p = +el.dataset.p;
+    const tone = p >= 90 ? " is-crit" : p >= 70 ? " is-warn" : "";
+    el.outerHTML = `<svg class="ring${tone}" viewBox="0 0 36 36" style="--p:${p}" aria-hidden="true">
+      <circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/>${glyphs[el.dataset.g] || ""}</svg>`;
+  });
+
+  requestAnimationFrame(() => setTimeout(() => document.body.classList.add("is-live"), 150));
+
+  // reveal on scroll (conteúdo visível por padrão; sem JS nada fica escondido)
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+  }), { rootMargin: "0px 0px -8% 0px" });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  // notch: aberto no topo da página, recolhe ao rolar, reabre no hover / toque / teclado
+  const notch = document.getElementById("notch");
+  const hint = document.getElementById("hint");
+  const touch = matchMedia("(hover: none)").matches;
+  document.getElementById("hint-text").textContent = touch ? "Tap the notch" : "Hover the notch";
+  let hovering = false, pinned = false, leaveTimer;
+
+  const atTop = () => scrollY < 80;
+  function sync() {
+    const open = atTop() || hovering || pinned;
+    notch.classList.toggle("is-open", open);
+    notch.setAttribute("aria-expanded", String(open));
+    hint.classList.toggle("is-shown", !open && scrollY < 900);
+  }
+  addEventListener("scroll", () => { if (!atTop()) pinned = false; sync(); }, { passive: true });
+  if (!touch) {
+    notch.addEventListener("mouseenter", () => { clearTimeout(leaveTimer); hovering = true; sync(); });
+    notch.addEventListener("mouseleave", () => { leaveTimer = setTimeout(() => { hovering = false; sync(); }, 260); });
+  }
+  const toggle = () => { pinned = !notch.classList.contains("is-open"); hovering = false; sync(); };
+  notch.addEventListener("click", e => { if (touch || !hovering) toggle(); });
+  notch.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } if (e.key === "Escape") { pinned = false; hovering = false; notch.classList.remove("is-open"); notch.setAttribute("aria-expanded", "false"); } });
+  document.addEventListener("click", e => { if (pinned && !notch.contains(e.target)) { pinned = false; sync(); } });
+  sync();
+
+  document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+    catch { btn.textContent = "Select & copy"; }
+    setTimeout(() => (btn.textContent = "Copy"), 1600);
+  }));
+})();
+</script>
+</body>
+</html>
