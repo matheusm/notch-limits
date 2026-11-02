@@ -26,7 +26,7 @@ struct AccountConfig: Decodable {
 let home = FileManager.default.homeDirectoryForCurrentUser.path
 let configFile = "\(home)/.config/notch-limits/accounts.json"
 
-let accounts: [Account] = loadAccounts()
+let accounts: [Account] = loadAccounts(from: configFile)
 
 private func expand(_ path: String) -> String {
     var p = (path as NSString).expandingTildeInPath
@@ -34,9 +34,9 @@ private func expand(_ path: String) -> String {
     return p
 }
 
-private func loadAccounts() -> [Account] {
+func loadAccounts(from file: String) -> [Account] {
     var configs = [AccountConfig(name: "Claude", provider: "claude"), AccountConfig(name: "Codex", provider: "codex")]
-    if let data = FileManager.default.contents(atPath: configFile),
+    if let data = FileManager.default.contents(atPath: file),
        let parsed = try? JSONDecoder().decode([AccountConfig].self, from: data), !parsed.isEmpty {
         configs = parsed
     }
@@ -136,7 +136,19 @@ final class Store: ObservableObject {
     @Published var loading = false
     private var blockedUntil: [String: Date] = [:]   // backoff por conta após 429
 
-    init() {
+    private let accounts: [Account]
+    private let local: (Account) -> Usage?
+    private let remote: (Account) async throws -> Usage
+
+    /// Fontes injetáveis para teste; o app usa as contas do accounts.json e os leitores reais
+    init(accounts: [Account] = NotchLimits.accounts,
+         local: @escaping (Account) -> Usage? = localUsage,
+         remote: @escaping (Account) async throws -> Usage = remoteUsage,
+         autoRefresh: Bool = true) {
+        self.accounts = accounts
+        self.local = local
+        self.remote = remote
+        guard autoRefresh else { return }
         // a cada minuto relê os arquivos locais; a API só é chamada quando o dado local passa de 10 min
         Task {
             while true {
@@ -154,17 +166,18 @@ final class Store: ObservableObject {
         let now = Date()
         let current = usage
         let blocked = blockedUntil
+        let local = local, remote = remote
 
         await withTaskGroup(of: (id: String, usage: Usage?, error: Error?, calledAPI: Bool).self) { group in
             for acc in accounts {
                 let previous = current[acc.id]
                 let canCall = network && (blocked[acc.id] ?? .distantPast) <= now
                 group.addTask {
-                    let best = Usage.newest(previous, localUsage(acc))
+                    let best = Usage.newest(previous, local(acc))
                     let fresh = best?.updatedAt.map { now.timeIntervalSince($0) < staleAfter } ?? false
                     guard canCall, force || !fresh else { return (acc.id, best, nil, false) }
                     do {
-                        return (acc.id, try await remoteUsage(acc), nil, true)
+                        return (acc.id, try await remote(acc), nil, true)
                     } catch {
                         return (acc.id, best, error, true)
                     }

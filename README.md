@@ -64,6 +64,7 @@ git clone https://github.com/matheusm/notch-limits.git
 cd notch-limits
 ./build.sh          # build, install to ~/Applications and launch
 ./build.sh --dist   # universal NotchLimits.dmg + .zip in dist/
+swift test          # run the test suite
 ```
 
 ## Configuration

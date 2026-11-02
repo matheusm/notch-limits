@@ -42,7 +42,7 @@ private func readJSON(_ path: String) -> [String: Any]? {
     return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
 }
 
-private func parseISO(_ s: String?) -> Date? {
+func parseISO(_ s: String?) -> Date? {
     guard let s else { return nil }
     let f = ISO8601DateFormatter()
     f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -55,16 +55,24 @@ private func get(_ url: String, headers: [String: String]) async throws -> Any {
     var req = URLRequest(url: URL(string: url)!, timeoutInterval: 20)
     headers.forEach { req.setValue($1, forHTTPHeaderField: $0) }
     let (data, resp) = try await URLSession.shared.data(for: req)
-    let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
+    let http = resp as? HTTPURLResponse
+    if let error = httpError(status: http?.statusCode ?? 0, retryAfter: http?.value(forHTTPHeaderField: "Retry-After")) {
+        throw error
+    }
+    return try JSONSerialization.jsonObject(with: data)
+}
+
+/// Erro correspondente ao status HTTP (nil = 200); em 429 usa o Retry-After, ou 5 min sem o header
+func httpError(status: Int, retryAfter: String?) -> UsageError? {
     switch status {
-    case 200: return try JSONSerialization.jsonObject(with: data)
-    case 401, 403: throw tokenExpired
+    case 200: return nil
+    case 401, 403: return tokenExpired
     case 429:
-        let wait = ((resp as? HTTPURLResponse)?.value(forHTTPHeaderField: "Retry-After")).flatMap(TimeInterval.init) ?? 300
+        let wait = retryAfter.flatMap(TimeInterval.init) ?? 300
         let min = max(1, Int((wait / 60).rounded(.up)))
-        throw UsageError(L("API rate limited — retrying in \(min) min", "A API limitou as consultas — tenta de novo em \(min) min",
-                           "La API limitó las consultas — reintento en \(min) min"), retryAfter: wait)
-    default: throw UsageError("HTTP \(status)")
+        return UsageError(L("API rate limited — retrying in \(min) min", "A API limitou as consultas — tenta de novo em \(min) min",
+                            "La API limitó las consultas — reintento en \(min) min"), retryAfter: wait)
+    default: return UsageError("HTTP \(status)")
     }
 }
 
@@ -88,7 +96,7 @@ private func runSecurity(_ service: String) throws -> Data {
 }
 
 /// Mesmo esquema do Claude Code: dir padrão sem sufixo, demais com sha256(path)[0..<8]
-private func keychainService(for configDir: String) -> String {
+func keychainService(for configDir: String) -> String {
     if configDir == "\(home)/.claude" { return "Claude Code-credentials" }
     let hash = SHA256.hash(data: Data(configDir.utf8)).map { String(format: "%02x", $0) }.joined()
     return "Claude Code-credentials-\(hash.prefix(8))"
@@ -108,7 +116,7 @@ private func claudePlan(_ creds: [String: Any]) -> String {
 }
 
 /// Converte a resposta de /api/oauth/usage (a mesma que o Claude Code guarda em cache)
-private func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
+func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
     var windows: [LimitWindow] = []
     if let limits = json["limits"] as? [[String: Any]] {
         for l in limits {
@@ -131,7 +139,7 @@ private func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
 }
 
 /// Cache `cachedUsageUtilization` que o Claude Code grava no seu .claude.json ao consultar o uso
-private func localClaude(configDir: String) -> Usage? {
+func localClaude(configDir: String) -> Usage? {
     // conta padrão usa ~/.claude.json; com CLAUDE_CONFIG_DIR o arquivo fica dentro do dir
     let state = configDir == "\(home)/.claude" ? "\(home)/.claude.json" : "\(configDir)/.claude.json"
     guard let cache = readJSON(state)?["cachedUsageUtilization"] as? [String: Any],
@@ -159,7 +167,7 @@ private func fetchClaude(configDir: String) async throws -> Usage {
 
 // MARK: - Codex
 
-private func codexWindow(_ w: [String: Any]?, minutesKey: String, secondsKey: String, resetKey: String) -> LimitWindow? {
+func codexWindow(_ w: [String: Any]?, minutesKey: String, secondsKey: String, resetKey: String) -> LimitWindow? {
     guard let w, let pct = w["used_percent"] as? Double else { return nil }
     let secs = (w[minutesKey] as? Int).map { $0 * 60 } ?? (w[secondsKey] as? Int) ?? 0
     let kind: WindowKind = secs >= 604_800 ? .weekly : secs >= 86_400 ? .days(secs / 86_400) : .session(hours: secs / 3600)
@@ -168,7 +176,7 @@ private func codexWindow(_ w: [String: Any]?, minutesKey: String, secondsKey: St
 }
 
 /// Último snapshot de `rate_limits` que o Codex grava nas sessões (sessions/AAAA/MM/DD/*.jsonl) a cada resposta
-private func localCodex(codexHome: String) -> Usage? {
+func localCodex(codexHome: String) -> Usage? {
     let fm = FileManager.default
     func children(_ path: String) -> [String] {
         ((try? fm.contentsOfDirectory(atPath: path)) ?? []).filter { !$0.hasPrefix(".") }.sorted(by: >).map { "\(path)/\($0)" }
