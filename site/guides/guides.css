@@ -187,7 +187,11 @@ footer .guides [aria-current] { color: var(--ink); }
   .menubar .item { display: none; }
 }
 @media (max-width: 520px) {
-  :root { --notch-w: 92px; --ear: 50px; }
+  /* o vão do notch encolhe até o "Download" da barra caber ao lado (F-3, D-022):
+     100vw − 2 × (margem 10 + Download ~78 + orelha 50 + folga 8). Igual em site/index.html */
+  :root { --notch-w: clamp(28px, 100vw - 292px, 92px); --ear: 50px; }
+  .menubar { padding-inline: 10px; }
+  .menubar .get { padding-inline: 8px; }
   .menubar__brand span { display: none; }
   .doc p, .doc li { font-size: 16px; }
   pre.code { font-size: 12px; padding: 18px; }

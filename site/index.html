@@ -242,8 +242,9 @@ h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035
 .glance .lede { margin-inline: auto; }
 .bigpill {
   margin: 64px auto 0; width: fit-content;
-  display: flex; align-items: center; gap: clamp(28px, 6vw, 72px);
-  padding: 22px clamp(28px, 5vw, 48px) 24px;
+  /* pisos baixos: em 320 px a pílula precisa caber em 280 px (3 anéis de 52 + vão de 18 + 3 espaços + margens = 272) */
+  display: flex; align-items: center; gap: clamp(18px, 6vw, 72px);
+  padding: 22px clamp(20px, 5vw, 48px) 24px;
   background: var(--pill); border-radius: 0 0 34px 34px;
   box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .9);
   position: relative;
@@ -267,6 +268,8 @@ h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035
 .points li { display: grid; grid-template-columns: 20px 1fr; gap: 12px; color: var(--ink-2); font-size: 15.5px; }
 .points li strong { color: var(--ink); font-weight: 600; }
 .points svg { width: 18px; height: 18px; margin-top: 3px; color: var(--ring); }
+/* lista como coluna própria (#signals): o gap da grade já separa; a margem extra descentrava no desktop e abria 66 px no celular */
+.split > .points { margin-top: 0; }
 
 .flow {
   border-radius: 16px; background: var(--ground-lift);
@@ -284,7 +287,8 @@ h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035
 pre.code + .flow { margin-top: 12px; }
 
 pre.code {
-  margin: 0; padding: 22px 24px; border-radius: 16px; overflow-x: auto;
+  /* 20 px nas laterais: a linha do alias (63 colunas, 472 px) cabe sem rolar na coluna de 517 px do desktop */
+  margin: 0; padding: 22px 20px; border-radius: 16px; overflow-x: auto;
   background: var(--ground-lift); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
   font-size: 12.5px; line-height: 1.75; color: var(--ink-2);
 }
@@ -326,7 +330,11 @@ footer .guides a:hover { color: var(--ink); text-decoration: underline; }
   .menubar .item { display: none; }
 }
 @media (max-width: 520px) {
-  :root { --notch-w: 92px; --ear: 50px; }
+  /* o vão do notch recolhido encolhe até o "Download" da barra caber ao lado (F-3, D-022):
+     100vw − 2 × (margem 10 + Download ~78 + orelha 50 + folga 8). Igual em guides/guides.css */
+  :root { --notch-w: clamp(28px, 100vw - 292px, 92px); --ear: 50px; }
+  .menubar { padding-inline: 10px; }
+  .menubar .get { padding-inline: 8px; }
   .flow__row { grid-template-columns: 1fr; gap: 2px; }
   .flow__row span { text-align: left; }
   .menubar__brand span { display: none; }
@@ -347,6 +355,9 @@ footer .guides a:hover { color: var(--ink); text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; }
   html { scroll-behavior: auto; }
+  /* sem movimento nada espera o scroll: seções e anéis já aparecem prontos */
+  .js .reveal:not(.is-in) { opacity: 1; transform: none; }
+  .ring .fill { stroke-dasharray: var(--p) 100; }
 }
 </style>
 </head>
