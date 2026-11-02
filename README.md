@@ -78,6 +78,8 @@ swift build               # compiler warnings are errors
 swift test
 ```
 
+The website in `site/` deploys to [notch-limits.vercel.app](https://notch-limits.vercel.app) automatically on every push to `main` that changes it.
+
 ## Configuration
 
 Out of the box, it tracks the default Claude Code account (`~/.claude`) and Codex (`~/.codex`).
