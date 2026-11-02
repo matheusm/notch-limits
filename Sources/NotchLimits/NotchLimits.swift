@@ -110,7 +110,11 @@ struct Usage {
 
 struct UsageError: LocalizedError {
     let errorDescription: String?
-    init(_ msg: String) { errorDescription = msg }
+    var retryAfter: TimeInterval? = nil   // preenchido quando a API responde 429
+    init(_ msg: String, retryAfter: TimeInterval? = nil) {
+        errorDescription = msg
+        self.retryAfter = retryAfter
+    }
 }
 
 // MARK: - Fetchers
@@ -158,7 +162,11 @@ private func get(_ url: String, headers: [String: String]) async throws -> Any {
     switch status {
     case 200: return try JSONSerialization.jsonObject(with: data)
     case 401, 403: throw tokenExpired
-    case 429: throw UsageError(L("API rate limited, retrying soon", "Rate limit da API, tenta de novo já já", "Límite de la API, se reintentará pronto"))
+    case 429:
+        let wait = ((resp as? HTTPURLResponse)?.value(forHTTPHeaderField: "Retry-After")).flatMap(TimeInterval.init) ?? 300
+        let min = max(1, Int((wait / 60).rounded(.up)))
+        throw UsageError(L("API rate limited — retrying in \(min) min", "A API limitou as consultas — tenta de novo em \(min) min",
+                           "La API limitó las consultas — reintento en \(min) min"), retryAfter: wait)
     default: throw UsageError("HTTP \(status)")
     }
 }
@@ -234,6 +242,7 @@ final class Store: ObservableObject {
     @Published var usage: [String: Usage] = [:]
     @Published var loading = false
     private var lastRefresh = Date.distantPast
+    private var blockedUntil: [String: Date] = [:]   // backoff por conta após 429
 
     init() {
         Task {
@@ -245,7 +254,8 @@ final class Store: ObservableObject {
     }
 
     func refreshIfStale() {
-        if Date().timeIntervalSince(lastRefresh) > 60 { Task { await refresh() } }
+        // o endpoint de uso tem limite de consultas apertado; hover só atualiza se os dados tiverem 2+ min
+        if Date().timeIntervalSince(lastRefresh) > 120 { Task { await refresh() } }
     }
 
     func refresh() async {
@@ -253,7 +263,7 @@ final class Store: ObservableObject {
         loading = true
         lastRefresh = Date()
         await withTaskGroup(of: (String, Result<Usage, Error>).self) { group in
-            for acc in accounts {
+            for acc in accounts where (blockedUntil[acc.id] ?? .distantPast) <= Date() {
                 group.addTask {
                     do {
                         switch acc.provider {
@@ -265,11 +275,18 @@ final class Store: ObservableObject {
             }
             for await (id, result) in group {
                 switch result {
-                case .success(let u): usage[id] = u
+                case .success(let u):
+                    usage[id] = u
+                    blockedUntil[id] = nil
                 case .failure(let e):
-                    // mantém o último valor bom e só anota o erro
+                    // mantém o último valor bom; em 429 espera o Retry-After e só mostra erro se não houver dado nenhum
                     var u = usage[id] ?? Usage()
-                    u.error = e.localizedDescription
+                    if let wait = (e as? UsageError)?.retryAfter {
+                        blockedUntil[id] = Date().addingTimeInterval(wait)
+                        u.error = u.windows.isEmpty ? e.localizedDescription : nil
+                    } else {
+                        u.error = e.localizedDescription
+                    }
                     usage[id] = u
                 }
             }

@@ -110,7 +110,7 @@ These are the same endpoints that Claude Code's `/usage` and Codex's `/status` u
 ## Troubleshooting
 
 - **"Token expired — open the CLI to renew it":** access tokens are short-lived, and notch-limits never refreshes them on purpose, to avoid racing your CLI. Run `claude` (or `claude-work`, `codex`…) once and the account comes back on the next refresh.
-- **"API rate limited":** the usage endpoint was polled too often. The next 5-minute refresh will recover it.
+- **"API rate limited — retrying in N min":** the usage endpoint only allows a few requests per minute (shared with Claude Code's `/usage`). The app honors the `Retry-After` header, keeps showing the last good data and retries automatically.
 - **Nothing next to the notch:** check that the built-in display is active. In clamshell mode the app automatically switches to the menu bar.
 
 ## Notes
