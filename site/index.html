@@ -136,15 +136,26 @@ code, pre, .mono { font-family: "Geist Mono", ui-monospace, SFMono-Regular, mono
 .acct__head { display: flex; align-items: baseline; gap: 7px; }
 .acct__name { font-size: 13.5px; font-weight: 600; }
 .acct__plan { font-size: 9.5px; font-weight: 600; letter-spacing: .06em; color: var(--ink-3); }
+/* "Best now": um estado, não um plano; mesmo visual neutro do app (D-016), sem cor nova */
+.acct__best { font-size: 9.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: rgba(255, 255, 255, .14); padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
 .acct__peak { margin-left: auto; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .acct__age { font-size: 10.5px; color: var(--ink-3); margin: 0 0 7px; }
 .win { display: grid; grid-template-columns: 48px 1fr 34px 104px; align-items: center; gap: 9px; font-size: 11px; line-height: 1.9; }
 .win__label { color: var(--ink-3); }
 .win__pct { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
 .win__reset { text-align: right; color: var(--ink-3); font-size: 10.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+/* linha do ritmo: alinhada à borda da barra, na cor que a janela já tem (D-017) */
+.win__pace { margin: -2px 0 3px 57px; font-size: 10.5px; line-height: 1.4; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar { position: relative; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .1); }
 .bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--ring); transition: width 1.1s var(--out) .25s; }
 .is-live .bar i { width: calc(var(--p) * 1%); }
+/* traço do ritmo uniforme (--e = parte da janela já passada), neutro como no app */
+.bar::after {
+  content: ""; position: absolute; top: -2px; left: calc(var(--e) * 1% - .75px);
+  width: 1.5px; height: 8px; border-radius: 1px; background: rgba(255, 255, 255, .55);
+  opacity: 0; transition: opacity .6s var(--out) 1.1s;
+}
+.is-live .bar::after { opacity: 1; }
 .is-warn { color: var(--warn); } .bar i.is-warn { background: var(--warn); }
 .is-crit { color: var(--crit); } .bar i.is-crit { background: var(--crit); }
 .panel__foot { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 10.5px; color: var(--ink-3); }
@@ -184,9 +195,11 @@ section { padding: clamp(88px, 13vw, 150px) 0 0; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035em; font-weight: 700; }
 .lede { font-size: clamp(17px, 1.6vw, 19px); color: var(--ink-2); max-width: 58ch; margin: 18px 0 0; }
+/* marca de versão das seções novas: neutra, no visual da etiqueta "Best now" */
+.tag { display: inline-block; margin: 0 0 18px; padding: 4px 10px; border-radius: 99px; background: rgba(255, 255, 255, .1); color: var(--ink); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 
 /* Hero */
-.hero { padding-top: calc(var(--bar-h) + 452px); text-align: center; }
+.hero { padding-top: calc(var(--bar-h) + 468px); text-align: center; }
 .hero h1 {
   font-size: clamp(54px, 10.4vw, 124px);
   line-height: .95; letter-spacing: -.04em; font-weight: 700;
@@ -268,6 +281,7 @@ h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.04; letter-spacing: -.035
 .flow__arrow::before, .flow__arrow::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
 .flow__api { display: grid; gap: 6px; padding: 11px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); color: var(--ink-2); }
 .flow__api code { color: var(--ink-2); overflow-wrap: anywhere; }
+pre.code + .flow { margin-top: 12px; }
 
 pre.code {
   margin: 0; padding: 22px 24px; border-radius: 16px; overflow-x: auto;
@@ -316,14 +330,19 @@ footer .guides a:hover { color: var(--ink); text-decoration: underline; }
   .flow__row { grid-template-columns: 1fr; gap: 2px; }
   .flow__row span { text-align: left; }
   .menubar__brand span { display: none; }
-  .hero { padding-top: calc(var(--bar-h) + 448px); }
+  .hero { padding-top: calc(var(--bar-h) + 464px); }
   .win { grid-template-columns: 42px 1fr 32px 96px; gap: 7px; }
+  .win__pace { margin-left: 49px; }
   .hero .cmd { width: 100%; }
   pre.code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; padding: 18px; }
   .panel { padding-inline: 16px; }
   .acct { gap: 12px; }
   .bigpill .gap { width: 18px; }
   .cmd code { font-size: 12px; }
+}
+@media (max-width: 380px) {
+  /* em telas muito estreitas a etiqueta "Best now" ocupa o lugar do plano, para o nome não quebrar */
+  .acct__head:has(.acct__best) .acct__plan { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; }
@@ -374,17 +393,18 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
           <div>
             <div class="acct__head"><span class="acct__name">Claude Personal</span><span class="acct__plan">MAX 20X</span><span class="acct__peak">64%</span></div>
             <p class="acct__age">updated just now</p>
-            <div class="win"><span class="win__label">5h</span><span class="bar"><i style="--p:38"></i></span><span class="win__pct">38%</span><span class="win__reset">in 2h10</span></div>
-            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i style="--p:64"></i></span><span class="win__pct">64%</span><span class="win__reset">Fri 10:00 PM</span></div>
+            <!-- ritmo: a variável "e" de cada barra é a parte da janela já passada, com "agora" = quarta 16:00; só a sessão do Codex está à frente do ritmo, então só ela tem a linha "At this pace" -->
+            <div class="win"><span class="win__label">5h</span><span class="bar" style="--e:57"><i style="--p:38"></i></span><span class="win__pct">38%</span><span class="win__reset">in 2h10</span></div>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar" style="--e:68"><i style="--p:64"></i></span><span class="win__pct">64%</span><span class="win__reset">Fri 10:00 PM</span></div>
           </div>
         </div>
         <div class="acct">
           <span class="ring" data-g="leaf" data-p="27"></span>
           <div>
-            <div class="acct__head"><span class="acct__name">Claude Work</span><span class="acct__plan">TEAM 5X</span><span class="acct__peak">27%</span></div>
+            <div class="acct__head"><span class="acct__name">Claude Work</span><span class="acct__plan">TEAM 5X</span><span class="acct__best" title="Most headroom among your Claude accounts">Best now</span><span class="acct__peak">27%</span></div>
             <p class="acct__age">updated 2 min ago</p>
-            <div class="win"><span class="win__label">5h</span><span class="bar"><i style="--p:12"></i></span><span class="win__pct">12%</span><span class="win__reset">in 4h05</span></div>
-            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i style="--p:27"></i></span><span class="win__pct">27%</span><span class="win__reset">tomorrow 11:00 AM</span></div>
+            <div class="win"><span class="win__label">5h</span><span class="bar" style="--e:18"><i style="--p:12"></i></span><span class="win__pct">12%</span><span class="win__reset">in 4h05</span></div>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar" style="--e:89"><i style="--p:27"></i></span><span class="win__pct">27%</span><span class="win__reset">tomorrow 11:00 AM</span></div>
           </div>
         </div>
         <div class="acct">
@@ -392,8 +412,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
           <div>
             <div class="acct__head"><span class="acct__name">Codex</span><span class="acct__plan">PRO</span><span class="acct__peak is-crit">91%</span></div>
             <p class="acct__age">updated just now</p>
-            <div class="win"><span class="win__label">5h</span><span class="bar"><i class="is-crit" style="--p:91"></i></span><span class="win__pct is-crit">91%</span><span class="win__reset">in 38min</span></div>
-            <div class="win"><span class="win__label">Weekly</span><span class="bar"><i class="is-warn" style="--p:72"></i></span><span class="win__pct is-warn">72%</span><span class="win__reset">Wed 9:00 AM</span></div>
+            <div class="win"><span class="win__label">5h</span><span class="bar" style="--e:87"><i class="is-crit" style="--p:91"></i></span><span class="win__pct is-crit">91%</span><span class="win__reset">in 38min</span></div>
+            <p class="win__pace is-crit">At this pace: limit today 4:26 PM</p>
+            <div class="win"><span class="win__label">Weekly</span><span class="bar" style="--e:76"><i class="is-warn" style="--p:72"></i></span><span class="win__pct is-warn">72%</span><span class="win__reset">Fri 9:00 AM</span></div>
           </div>
         </div>
         <div class="panel__foot"><span>Live demo · sample data</span><span><span class="chip">Login</span><span class="chip">Notch</span></span></div>
@@ -470,22 +491,44 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <section class="wrap" id="accounts">
     <div class="split">
       <div>
+        <p class="tag reveal">New in 1.1</p>
         <h2 class="reveal">Every account you juggle.</h2>
-        <p class="lede reveal">Personal Max, a work Team plan, a ChatGPT plan for Codex: list them once and each gets its own ring and its own icon. Any SF Symbol works.</p>
+        <p class="lede reveal">Personal Max, a work Team plan, a ChatGPT plan for Codex: each gets its own ring and its own icon. Sign in once per config folder and notch-limits finds it. No JSON to write.</p>
+        <ul class="points reveal">
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Found automatically.</strong> Accounts in <code>~/.claude*</code> and <code>~/.codex*</code> show up at launch and whenever you open Settings. Folders kept anywhere else still go in <code>accounts.json</code> by hand.</span></li>
+          <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Settings, no restart.</strong> Show, hide, rename, reorder and pick an icon from the gear. Changes apply at once, without a network request.</span></li>
+        </ul>
       </div>
       <div class="reveal">
-<pre class="code"><span class="c">// ~/.config/notch-limits/accounts.json</span>
-[
-  { <span class="k">"name"</span>: <span class="s">"Claude Personal"</span>,
-    <span class="k">"provider"</span>: <span class="s">"claude"</span>, <span class="k">"path"</span>: <span class="s">"~/.claude"</span> },
-  { <span class="k">"name"</span>: <span class="s">"Claude Work"</span>, <span class="k">"icon"</span>: <span class="s">"leaf.fill"</span>,
-    <span class="k">"provider"</span>: <span class="s">"claude"</span>, <span class="k">"path"</span>: <span class="s">"~/.claude-work"</span> },
-  { <span class="k">"name"</span>: <span class="s">"Codex"</span>,
-    <span class="k">"provider"</span>: <span class="s">"codex"</span>, <span class="k">"path"</span>: <span class="s">"~/.codex"</span> }
-]</pre>
 <pre class="code"><span class="c"># ~/.zshrc: one login per config dir</span>
 <span class="k">alias</span> claude-work=<span class="s">'CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</span></pre>
+        <div class="flow" aria-label="Accounts notch-limits finds on its own, and where Settings saves them">
+          <div class="flow__src">
+            <div class="flow__row"><code>~/.claude.json</code><span>Claude</span></div>
+            <div class="flow__row"><code>~/.claude-work/.claude.json</code><span>Claude Work</span></div>
+            <div class="flow__row"><code>~/.codex/auth.json</code><span>Codex</span></div>
+          </div>
+          <div class="flow__arrow">Settings saves your changes to</div>
+          <div class="flow__api">
+            <code>~/.config/notch-limits/accounts.json</code>
+          </div>
+        </div>
       </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="signals">
+    <div class="split">
+      <div>
+        <p class="tag reveal">New in 1.1</p>
+        <h2 class="reveal">Know before you hit it.</h2>
+        <p class="lede reveal">A percentage says where you are, not whether you'll make it to the reset. notch-limits now projects your pace, points to the account with the most headroom, and can tell you when a limit is close or free again.</p>
+      </div>
+      <ul class="points reveal">
+        <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Pace on every bar.</strong> A faint tick marks where usage would be if spread evenly over the window. Run ahead of it and the panel says when you'll hit the limit: "At this pace: limit today 4:26 PM". It's a straight-line projection from the latest reading, shown once 15% of the window has passed.</span></li>
+        <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Best now.</strong> With two or more accounts of the same provider, the one with the most headroom gets a small tag. Claude and Codex accounts are ranked separately.</span></li>
+        <li><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span><strong>Notifications, if you want them.</strong> A heads-up when a limit reaches 90%, and another when a limit you hit resets: "Claude Work is available again". Off by default, no sound, no extra requests.</span></li>
+      </ul>
     </div>
   </section>
 

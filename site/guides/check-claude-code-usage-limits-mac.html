@@ -93,6 +93,8 @@
       <li><strong>One ring per account.</strong> Each ring fills to the highest of that account's windows, since that's the limit you'll hit first.</li>
       <li><strong>Hover for detail.</strong> The notch expands into every window, with its percentage and reset time.</li>
       <li><strong>Quiet until it matters.</strong> Rings stay gray, turn orange from 70% and red from 90%.</li>
+      <li><strong>Pace, not just percent.</strong> A faint tick on each bar marks where usage would be if spread evenly over the window. If you're on track to hit a limit before it resets, the panel says when: "At this pace: limit today 4:26 PM". It's a straight-line projection from the latest reading, shown once 15% of the window has passed.</li>
+      <li><strong>Optional notifications.</strong> A heads-up when a limit reaches 90%, and another when a limit you hit resets. Off by default; turn them on in Settings.</li>
       <li><strong>Local-first.</strong> It reads the usage snapshot Claude Code already writes to <code>~/.claude.json</code> and the rate limits Codex writes to its session logs. It only calls the usage endpoint, the same one <code>/usage</code> uses, when the newest data is more than 10 minutes old. Opening the panel never makes a request.</li>
       <li><strong>Clear about freshness.</strong> Each account shows how old its data is, and the label turns orange after 15 minutes.</li>
       <li><strong>No notch, no problem.</strong> On a Mac without a notch, or in clamshell mode with an external display, it moves to the menu bar.</li>
