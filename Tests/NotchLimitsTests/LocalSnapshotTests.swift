@@ -13,19 +13,21 @@ struct LocalSnapshotTests {
         } }
         """)
 
-        let usage = localClaude(configDir: "\(dir.path)/.claude-test")
+        // plano vem de um stub: o teste não toca o Keychain real
+        let usage = localClaude(configDir: "\(dir.path)/.claude-test") { _ in "max 20x" }
 
         #expect(usage?.updatedAt == Date(timeIntervalSince1970: 1_793_647_131.94))
         #expect(usage?.windows.map(\.kind) == [.weekly])
         #expect(usage?.peak == 16)
+        #expect(usage?.plan == "max 20x")
     }
 
     @Test func claudeWithoutCacheIsNil() {
         let dir = TempDir()
         dir.write(".claude-test/.claude.json", #"{ "numStartups": 3 }"#)
 
-        #expect(localClaude(configDir: "\(dir.path)/.claude-test") == nil)
-        #expect(localClaude(configDir: "\(dir.path)/missing") == nil)
+        #expect(localClaude(configDir: "\(dir.path)/.claude-test") { _ in nil } == nil)
+        #expect(localClaude(configDir: "\(dir.path)/missing") { _ in nil } == nil)
     }
 
     /// Pega o último rate_limits do arquivo de sessão mais recente, ignorando eventos sem limites

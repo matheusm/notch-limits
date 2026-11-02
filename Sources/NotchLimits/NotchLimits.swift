@@ -1,64 +1,6 @@
 import SwiftUI
 import ServiceManagement
 
-// MARK: - Contas
-// Lidas de ~/.config/notch-limits/accounts.json; sem o arquivo, usa ~/.claude e ~/.codex
-
-enum Provider {
-    case claude(configDir: String)   // dir passado em CLAUDE_CONFIG_DIR (~/.claude = conta padrão)
-    case codex(home: String)         // CODEX_HOME (~/.codex)
-}
-
-struct Account: Identifiable {
-    let id: String
-    let name: String
-    let glyph: Glyph                 // ícone no meio do anel
-    let provider: Provider
-}
-
-struct AccountConfig: Decodable {
-    let name: String
-    let provider: String             // "claude" | "codex"
-    var path: String?                // claude: CLAUDE_CONFIG_DIR (padrão ~/.claude) · codex: CODEX_HOME (padrão ~/.codex)
-    var icon: String?                // "claude", "codex" ou nome de um SF Symbol
-}
-
-let home = FileManager.default.homeDirectoryForCurrentUser.path
-let configFile = "\(home)/.config/notch-limits/accounts.json"
-
-let accounts: [Account] = loadAccounts(from: configFile)
-
-private func expand(_ path: String) -> String {
-    var expanded = (path as NSString).expandingTildeInPath
-    while expanded.count > 1 && expanded.hasSuffix("/") { expanded.removeLast() }
-    return expanded
-}
-
-func loadAccounts(from file: String) -> [Account] {
-    var configs = [AccountConfig(name: "Claude", provider: "claude"), AccountConfig(name: "Codex", provider: "codex")]
-    if let data = FileManager.default.contents(atPath: file),
-       let parsed = try? JSONDecoder().decode([AccountConfig].self, from: data), !parsed.isEmpty {
-        configs = parsed
-    }
-    return configs.enumerated().compactMap { index, config in
-        let glyph: Glyph = switch config.icon ?? config.provider {
-        case "claude": .claude
-        case "codex": .codex
-        case let symbol: .symbol(symbol)
-        }
-        switch config.provider {
-        case "claude":
-            let dir = expand(config.path ?? "~/.claude")
-            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .claude(configDir: dir))
-        case "codex":
-            let dir = expand(config.path ?? "~/.codex")
-            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .codex(home: dir))
-        default:
-            return nil
-        }
-    }
-}
-
 // MARK: - Modelo
 
 enum WindowKind: Hashable {
@@ -136,20 +78,21 @@ func ageText(_ date: Date?) -> String {
 final class Store: ObservableObject {
     static let shared = Store()
 
-    @Published var usage: [String: Usage] = [:]
+    @Published private(set) var accounts: [Account]   // só as visíveis, na ordem dos Ajustes
+    @Published var usage: [String: Usage] = [:]          // por Account.id (provider:path)
     @Published var loading = false
     private var blockedUntil: [String: Date] = [:]   // backoff por conta após 429
+    private var localPending = false                 // releitura local pedida durante outra atualização
 
-    private let accounts: [Account]
     private let local: (Account) -> Usage?
     private let remote: (Account) async throws -> Usage
 
-    /// Fontes injetáveis para teste; o app usa as contas do accounts.json e os leitores reais
-    init(accounts: [Account] = NotchLimits.accounts,
+    /// Fontes injetáveis para teste; o app usa as contas encontradas na home e do accounts.json e os leitores reais
+    init(accounts: [Account] = loadAccounts(from: configFile, home: home),
          local: @escaping (Account) -> Usage? = localUsage,
          remote: @escaping (Account) async throws -> Usage = remoteUsage,
          autoRefresh: Bool = true) {
-        self.accounts = accounts
+        self.accounts = accounts.filter(\.enabled)
         self.local = local
         self.remote = remote
         guard autoRefresh else { return }
@@ -165,43 +108,72 @@ final class Store: ObservableObject {
     /// network: false só relê os arquivos locais (usado ao abrir o notch/menu, sem nenhuma requisição)
     /// force: consulta a API mesmo com dado fresco (botão de atualizar), respeitando o backoff
     func refresh(network: Bool = true, force: Bool = false) async {
-        guard !loading else { return }
+        guard !loading else {
+            if !network { localPending = true }   // roda quando a atual terminar (ex.: conta nova nos Ajustes)
+            return
+        }
         loading = true
         let now = Date()
         let current = usage
         let blocked = blockedUntil
         let local = local, remote = remote
 
-        await withTaskGroup(of: (id: String, usage: Usage?, error: Error?, calledAPI: Bool).self) { group in
+        await withTaskGroup(of: Outcome.self) { group in
             for acc in accounts {
                 let previous = current[acc.id]
                 let canCall = network && (blocked[acc.id] ?? .distantPast) <= now
                 group.addTask {
                     let best = Usage.newest(previous, local(acc))
                     let fresh = best?.updatedAt.map { now.timeIntervalSince($0) < staleAfter } ?? false
-                    guard canCall, force || !fresh else { return (acc.id, best, nil, false) }
+                    guard canCall, force || !fresh else { return Outcome(id: acc.id, usage: best, error: nil, calledAPI: false) }
                     do {
-                        return (acc.id, try await remote(acc), nil, true)
+                        return Outcome(id: acc.id, usage: try await remote(acc), error: nil, calledAPI: true)
                     } catch {
-                        return (acc.id, best, error, true)
+                        return Outcome(id: acc.id, usage: best, error: error, calledAPI: true)
                     }
                 }
             }
-            for await result in group {
-                var updated = result.usage ?? Usage()
-                if updated.plan == nil { updated.plan = current[result.id]?.plan }
-                if result.calledAPI {
-                    updated.error = result.error?.localizedDescription
-                    if let wait = (result.error as? UsageError)?.retryAfter {
-                        blockedUntil[result.id] = Date().addingTimeInterval(wait)
-                    }
-                } else {
-                    updated.error = current[result.id]?.error   // sem nova tentativa, mantém o último erro conhecido
-                }
-                usage[result.id] = updated
+            for await outcome in group {
+                record(outcome, previous: current[outcome.id])
             }
         }
         loading = false
+        if localPending {
+            localPending = false
+            await refresh(network: false)
+        }
+    }
+
+    /// Resultado de uma conta numa atualização
+    private struct Outcome {
+        let id: String
+        let usage: Usage?
+        let error: Error?
+        let calledAPI: Bool
+    }
+
+    /// O Retry-After vale mesmo se a conta foi escondida durante a chamada (D-005);
+    /// o uso só é gravado se a conta ainda está na lista
+    private func record(_ outcome: Outcome, previous: Usage?) {
+        if outcome.calledAPI, let wait = (outcome.error as? UsageError)?.retryAfter {
+            blockedUntil[outcome.id] = Date().addingTimeInterval(wait)
+        }
+        guard accounts.contains(where: { $0.id == outcome.id }) else { return }
+        var updated = outcome.usage ?? Usage()
+        if updated.plan == nil { updated.plan = previous?.plan }
+        // sem nova tentativa, mantém o último erro conhecido
+        updated.error = outcome.calledAPI ? outcome.error?.localizedDescription : previous?.error
+        usage[outcome.id] = updated
+    }
+
+    /// Troca a lista na hora (Ajustes) e só relê os arquivos locais, sem nenhuma requisição (D-002).
+    /// O uso de contas que saíram é descartado; o backoff fica, para esconder e mostrar não furar o Retry-After (D-005)
+    @discardableResult
+    func setAccounts(_ list: [Account]) -> Task<Void, Never> {
+        accounts = list.filter(\.enabled)
+        let ids = Set(accounts.map(\.id))
+        usage = usage.filter { ids.contains($0.key) }
+        return Task { await refresh(network: false) }
     }
 
     /// Um anel por conta, preenchido com o maior uso entre as janelas de limite
@@ -300,13 +272,20 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ForEach(accounts) { acc in
+            ForEach(store.accounts) { acc in
                 AccountView(account: acc, usage: store.usage[acc.id])
-                if acc.id != accounts.last?.id { Divider() }
+                if acc.id != store.accounts.last?.id { Divider() }
             }
             Divider()
             HStack {
                 Spacer()
+                Button {
+                    SettingsWindow.shared.show(store: store)
+                } label: {
+                    Image(systemName: "gearshape").accessibilityLabel(tr("Settings", "Ajustes", "Ajustes"))
+                }
+                .buttonStyle(.borderless)
+                .help(tr("Settings", "Ajustes", "Ajustes"))
                 Button {
                     Task { await store.refresh(force: true) }
                 } label: {

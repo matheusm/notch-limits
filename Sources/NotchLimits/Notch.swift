@@ -7,8 +7,8 @@ private let earWidth: CGFloat = 56
 private let expandedWidth: CGFloat = 380
 private let windowHeight: CGFloat = 720
 // metade das contas de cada lado do notch (a sobra vai pra esquerda)
-private var leftAccounts: ArraySlice<Account> { accounts.prefix((accounts.count + 1) / 2) }
-private var rightAccounts: ArraySlice<Account> { accounts.dropFirst((accounts.count + 1) / 2) }
+private func leftAccounts(_ list: [Account]) -> ArraySlice<Account> { list.prefix((list.count + 1) / 2) }
+private func rightAccounts(_ list: [Account]) -> ArraySlice<Account> { list.dropFirst((list.count + 1) / 2) }
 
 private let ringGray = Color(white: 0.82)
 private let dim = Color.white.opacity(0.45)
@@ -35,9 +35,9 @@ struct NotchView: View {
         let collapsedWidth = model.notchSize.width + earWidth * 2
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ear(leftAccounts).frame(width: earWidth)
+                ear(leftAccounts(store.accounts)).frame(width: earWidth)
                 Color.clear.frame(width: model.notchSize.width)
-                ear(rightAccounts).frame(width: earWidth)
+                ear(rightAccounts(store.accounts)).frame(width: earWidth)
             }
             .frame(height: model.notchSize.height)
             .opacity(model.expanded ? 0 : 1)
@@ -87,10 +87,10 @@ private struct NotchDetailView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(accounts) { acc in
+            ForEach(store.accounts) { acc in
                 NotchAccountRow(account: acc, usage: store.usage[acc.id])
                     .padding(.vertical, 12)
-                if acc.id != accounts.last?.id {
+                if acc.id != store.accounts.last?.id {
                     Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
                 }
             }
@@ -110,6 +110,7 @@ private struct NotchDetailView: View {
                 setLaunchAtLogin(launchAtLogin)
             }
             chip("Notch", on: showNotch) { showNotch.toggle() }
+            iconButton("gearshape", label: tr("Settings", "Ajustes", "Ajustes")) { SettingsWindow.shared.show(store: store) }
             iconButton(store.loading ? "ellipsis" : "arrow.clockwise", label: tr("Refresh", "Atualizar", "Actualizar")) {
                 Task { await store.refresh(force: true) }
             }
@@ -144,6 +145,7 @@ private struct NotchDetailView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white.opacity(0.8))
+        .help(label)
     }
 }
 

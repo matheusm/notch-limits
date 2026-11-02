@@ -31,7 +31,7 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Menu bar fallback:** the menu bar icon appears automatically when no screen has a notch (for example clamshell mode with an external monitor) or when notch mode is off.
 - **Claude Code limits:** session (5h), weekly (all models) and weekly per-model limits (e.g. Opus/Fable), with exact reset times.
 - **Codex limits:** primary and secondary rate-limit windows for ChatGPT plans (Plus, Pro, Team…).
-- **Multiple accounts:** any number of Claude Code config dirs plus Codex homes.
+- **Multiple accounts:** any number of Claude Code config dirs plus Codex homes, found automatically in `~/.claude*` and `~/.codex*` and managed in a Settings window.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
 - **Local-first:** it reads the usage snapshots Claude Code and Codex already write to disk and only calls the API when they are more than 10 minutes old.
@@ -82,9 +82,30 @@ The website in `site/` deploys to [notch-limits.vercel.app](https://notch-limits
 
 ## Configuration
 
-Out of the box, it tracks the default Claude Code account (`~/.claude`) and Codex (`~/.codex`).
+Accounts are found automatically. At launch, and whenever you open Settings, the app looks at the folders directly inside your home folder:
 
-To track more accounts, create `~/.config/notch-limits/accounts.json`:
+| Account | Found when | Default name |
+| --- | --- | --- |
+| Default Claude Code account | `~/.claude.json` exists | Claude |
+| Other Claude Code config dirs | a `~/.claude<suffix>` folder contains a `.claude.json` file | Claude Work (for `~/.claude-work`) |
+| Codex | a `~/.codex` or `~/.codex<suffix>` folder contains an `auth.json` file | Codex, Codex Team (for `~/.codex-team`) |
+
+Discovery only checks that these files exist. It does not read them, your shell configuration or the Keychain. If nothing is found, the app shows the default Claude Code (`~/.claude`) and Codex (`~/.codex`) accounts with a hint to log in.
+
+### Settings
+
+Open Settings with the gear button in the expanded notch or in the menu bar panel. Every account, found or configured, has a row where you can:
+
+- show or hide it (the last visible account cannot be hidden),
+- pick its icon,
+- rename it (press Return or click elsewhere to apply; an empty name keeps the previous one),
+- move it up or down.
+
+Changes apply immediately, without a restart and without any network request, and are saved to `~/.config/notch-limits/accounts.json`.
+
+### accounts.json
+
+The file is still supported, and Settings now writes it too. You only need to edit it by hand for config folders outside your home folder or not named `.claude*` / `.codex*`:
 
 ```json
 [
@@ -100,8 +121,11 @@ To track more accounts, create `~/.config/notch-limits/accounts.json`:
 | `provider` | `claude` or `codex` |
 | `path` | Claude: the `CLAUDE_CONFIG_DIR` of that account (default `~/.claude`). Codex: the `CODEX_HOME` (default `~/.codex`) |
 | `icon` | `claude`, `codex`, or any [SF Symbol](https://developer.apple.com/sf-symbols/) name (`leaf.fill`, `briefcase.fill`, `building.2.fill`…) |
+| `enabled` | Optional. `false` hides the account; missing means shown. Settings writes it only on hidden accounts |
 
-The accounts are split between the two sides of the notch in order: the first half on the left, the rest on the right. Restart the app after editing the file.
+When the file exists, it is the source of truth: accounts found later that are not in it are added hidden, so your setup stays as it was, and you turn them on in Settings. Before Settings first overwrites a file that was written or edited by hand (not one it saved itself), it copies it to `accounts.json.bak`; an existing backup is never replaced. If `accounts.json` is a symlink (for example into a dotfiles repo), Settings writes through it and keeps the link. Entries with an unknown `provider` are ignored, and Settings drops them when it saves. If the file is empty or invalid, the app uses the accounts it finds.
+
+The accounts are split between the two sides of the notch in order: the first half on the left, the rest on the right. After editing the file by hand, restart the app or click the gear button: every click re-reads the file and your home folder, even when Settings is already open.
 
 ### Multiple Claude Code accounts
 
@@ -112,7 +136,7 @@ Claude Code keeps one login per config directory. A common setup is one alias pe
 alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'
 ```
 
-Log in once with `claude-work`, add `~/.claude-work` to `accounts.json`, and its limits will show up.
+Log in once with `claude-work`. The `~/.claude-work` folder is found automatically as "Claude Work" the next time the app starts or you open Settings. If you already have an `accounts.json`, it appears there hidden: turn it on in Settings. You only need to add an `accounts.json` entry for config folders outside your home folder or not named `.claude*`.
 
 ## Usage
 
@@ -122,6 +146,7 @@ Log in once with `claude-work`, add `~/.claude-work` to `accounts.json`, and its
 | Move the mouse away | Collapses back to the rings |
 | **Notch** chip | Turn the notch HUD off and use the menu bar item instead |
 | **Login** chip | Launch at login |
+| ⚙ | Settings: show, hide, rename, reorder and pick icons for accounts |
 | ↻ / ⏻ | Refresh now / quit |
 
 Each ring shows the **highest** usage among that account's windows, since that is the limit you will hit first.

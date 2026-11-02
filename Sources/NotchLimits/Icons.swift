@@ -5,6 +5,23 @@ import SwiftUI
 enum Glyph {
     case claude, codex
     case symbol(String)
+
+    /// Valor de "icon" no accounts.json: "claude", "codex" ou um SF Symbol
+    init(name: String) {
+        switch name {
+        case "claude": self = .claude
+        case "codex": self = .codex
+        default: self = .symbol(name)
+        }
+    }
+
+    var name: String {
+        switch self {
+        case .claude: "claude"
+        case .codex: "codex"
+        case .symbol(let symbol): symbol
+        }
+    }
 }
 
 /// Starburst do Claude: raios em cápsula alternando comprimento
