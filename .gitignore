@@ -5,3 +5,4 @@ dist/
 .impeccable/review/
 .vercel
 .evidence/
+.claude/worktrees/
