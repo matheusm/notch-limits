@@ -1,0 +1,5 @@
+[
+  { "name": "Claude Personal", "provider": "claude", "path": "~/.claude", "icon": "claude" },
+  { "name": "Claude Work", "provider": "claude", "path": "~/.claude-work", "icon": "briefcase.fill" },
+  { "name": "Codex", "provider": "codex", "path": "~/.codex", "icon": "codex" }
+]
