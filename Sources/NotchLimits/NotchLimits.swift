@@ -49,7 +49,12 @@ struct Usage {
     var peak: Double? { windows.map(\.percent).max() }
 
     /// Dado com mais de 15 min fica destacado na UI
-    var isStale: Bool { updatedAt.map { Date().timeIntervalSince($0) > 900 } ?? true }
+    var isStale: Bool { isStale(at: Date()) }
+
+    func isStale(at now: Date) -> Bool { updatedAt.map { now.timeIntervalSince($0) > 900 } ?? true }
+
+    /// Dado que a UI mostra sem aviso: tem janelas e no máximo 15 min (os alertas só olham esse dado)
+    func isUsable(at now: Date) -> Bool { !windows.isEmpty && !isStale(at: now) }
 
     /// Mostra o erro só quando não há dado útil para exibir no lugar
     var visibleError: String? { windows.isEmpty || isStale ? error : nil }
@@ -76,7 +81,7 @@ func ageText(_ date: Date?) -> String {
 
 @MainActor
 final class Store: ObservableObject {
-    static let shared = Store()
+    static let shared = Store(onRefresh: LimitNotifier.shared.update)
 
     @Published private(set) var accounts: [Account]   // só as visíveis, na ordem dos Ajustes
     @Published var usage: [String: Usage] = [:]          // por Account.id (provider:path)
@@ -86,15 +91,19 @@ final class Store: ObservableObject {
 
     private let local: (Account) -> Usage?
     private let remote: (Account) async throws -> Usage
+    private let onRefresh: @MainActor ([Account], [String: Usage]) -> Void
 
-    /// Fontes injetáveis para teste; o app usa as contas encontradas na home e do accounts.json e os leitores reais
+    /// Fontes injetáveis para teste; o app usa as contas encontradas na home e do accounts.json e os leitores reais.
+    /// onRefresh recebe o uso final uma vez ao fim de cada atualização (o app passa o notificador, R-06)
     init(accounts: [Account] = loadAccounts(from: configFile, home: home),
          local: @escaping (Account) -> Usage? = localUsage,
          remote: @escaping (Account) async throws -> Usage = remoteUsage,
+         onRefresh: @escaping @MainActor ([Account], [String: Usage]) -> Void = { _, _ in },
          autoRefresh: Bool = true) {
         self.accounts = accounts.filter(\.enabled)
         self.local = local
         self.remote = remote
+        self.onRefresh = onRefresh
         guard autoRefresh else { return }
         // a cada minuto relê os arquivos locais; a API só é chamada quando o dado local passa de 10 min
         Task {
@@ -138,6 +147,7 @@ final class Store: ObservableObject {
             }
         }
         loading = false
+        onRefresh(accounts, usage)
         if localPending {
             localPending = false
             await refresh(network: false)
@@ -193,9 +203,13 @@ func setLaunchAtLogin(_ enabled: Bool) {
     }
 }
 
-/// Cor só para alerta (≥70% laranja, ≥90% vermelho); abaixo disso fica neutro
+/// Níveis de alerta: laranja a partir de 70%; vermelho e notificação (R-06) a partir de 90%
+let warningLevel: Double = 70
+let nearLimitLevel: Double = 90
+
+/// Cor só para alerta; abaixo de warningLevel fica neutro
 func alertColor(for pct: Double) -> Color? {
-    pct >= 90 ? .red : pct >= 70 ? .orange : nil
+    pct >= nearLimitLevel ? .red : pct >= warningLevel ? .orange : nil
 }
 
 /// Janela de sessão mostra contagem regressiva; as semanais mostram dia e hora do reset

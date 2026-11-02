@@ -33,6 +33,7 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Codex limits:** primary and secondary rate-limit windows for ChatGPT plans (Plus, Pro, Team…).
 - **Multiple accounts:** any number of Claude Code config dirs plus Codex homes, found automatically in `~/.claude*` and `~/.codex*` and managed in a Settings window.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
+- **Optional notifications:** a heads-up when a limit reaches 90%, and another when a limit you hit resets ("Claude Work is available again"). Off by default; turn them on in Settings.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
 - **Local-first:** it reads the usage snapshots Claude Code and Codex already write to disk and only calls the API when they are more than 10 minutes old.
 - **Small and dependency-free:** pure Swift + SwiftUI.
@@ -103,6 +104,13 @@ Open Settings with the gear button in the expanded notch or in the menu bar pane
 
 Changes apply immediately, without a restart and without any network request, and are saved to `~/.config/notch-limits/accounts.json`.
 
+The **Notifications** section has a single toggle, off by default: **Notify at 90% and when a limit resets**. Turning it on asks macOS for permission; if you deny it, the toggle turns back off. If macOS has no answer on record when you open Settings (for example after notification permissions were reset), the toggle shows off; turning it on asks again. Once it is on you get, per account:
+
+- **"… is close to its limit"** when a limit window reaches 90%, once per window period (going back under 90% and over it again before the reset does not repeat it);
+- **"… is available again"** when a window that was at 90% or more resets and no other window of that account is still at 90% or more. It arrives within about a minute of the reset time, without waiting for the API.
+
+Notifications are text-only banners, with no sound or badge, and they make no extra network requests. They only use data that is less than 15 minutes old, and the first reading after launch never notifies, so a restart never repeats an alert. The setting is stored in the app's preferences, not in `accounts.json`.
+
 ### accounts.json
 
 The file is still supported, and Settings now writes it too. You only need to edit it by hand for config folders outside your home folder or not named `.claude*` / `.codex*`:
@@ -146,7 +154,7 @@ Log in once with `claude-work`. The `~/.claude-work` folder is found automatical
 | Move the mouse away | Collapses back to the rings |
 | **Notch** chip | Turn the notch HUD off and use the menu bar item instead |
 | **Login** chip | Launch at login |
-| ⚙ | Settings: show, hide, rename, reorder and pick icons for accounts |
+| ⚙ | Settings: show, hide, rename, reorder and pick icons for accounts; turn on notifications |
 | ↻ / ⏻ | Refresh now / quit |
 
 Each ring shows the **highest** usage among that account's windows, since that is the limit you will hit first.
@@ -172,6 +180,7 @@ These are the same endpoints that Claude Code's `/usage` and Codex's `/status` u
 - **"Token expired — open the CLI to renew it":** access tokens are short-lived, and notch-limits never refreshes them on purpose, to avoid racing your CLI. Run `claude` (or `claude-work`, `codex`…) once and the account comes back on the next refresh.
 - **"API rate limited — retrying in N min":** the usage endpoint only allows a few requests per minute (shared with Claude Code's `/usage`). The app honors the `Retry-After` header, keeps showing the last good data and retries automatically.
 - **Nothing next to the notch:** check that the built-in display is active. In clamshell mode the app automatically switches to the menu bar.
+- **No notifications:** check that the toggle is on in Settings → Notifications, then open **System Settings → Notifications → Notch Limits** and allow notifications (banner style). Notifications only work in the installed app, not when it runs unbundled with `swift run`.
 
 ## Notes
 

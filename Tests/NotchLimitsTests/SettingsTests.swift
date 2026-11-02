@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UserNotifications
 @testable import NotchLimits
 
 @MainActor
@@ -113,5 +114,148 @@ struct SettingsTests {
         #expect(settings.list[0].name == "Personal")
         #expect(applied.lists.last?.first?.name == "Personal")
         #expect(settings.saveError != nil)
+    }
+
+    /// QA do R-05: a engrenagem relê o disco, então o erro de uma gravação anterior não vale mais
+    @Test func rereadingTheFileClearsAnOldSaveError() {
+        home.write(".config", "a file where the folder should be")
+        let settings = makeSettings(Applied())
+        settings.rename("Personal", id: settings.list[0].id)
+        #expect(settings.saveError != nil)
+
+        settings.reload()
+
+        #expect(settings.list[0].name == "Claude")
+        #expect(settings.saveError == nil)
+    }
+}
+
+/// Permissão e toggle falsos: nenhum teste toca a Central de Notificações nem o UserDefaults real
+@MainActor
+final class FakePermission {
+    var granted = false
+    var status = UNAuthorizationStatus.authorized
+    var prompt: Gate?            // segura a resposta do pedido de permissão até o teste liberar
+    var asked = 0
+    var saved: [Bool] = []
+
+    func makeSettings(isOn: Bool) -> NotificationSettings {
+        NotificationSettings(
+            isOn: isOn,
+            save: { self.saved.append($0) },
+            requestPermission: {
+                self.asked += 1
+                await self.prompt?.wait()
+                return self.granted
+            },
+            authorization: { self.status }
+        )
+    }
+}
+
+@MainActor
+@Suite("Notification settings")
+struct NotificationSettingsTests {
+    @Test func turningNotificationsOnAsksForPermissionAndStaysOnWhenAllowed() async {
+        let fake = FakePermission()
+        fake.granted = true
+        let settings = fake.makeSettings(isOn: false)
+
+        await settings.setOn(true)
+
+        #expect(fake.asked == 1)
+        #expect(settings.isOn && !settings.denied)
+        #expect(fake.saved == [true])
+    }
+
+    /// Critério 10 (lógica): negar devolve o toggle para desligado e mostra a legenda
+    @Test func deniedPermissionTurnsTheToggleBackOffAndShowsTheCaption() async {
+        let fake = FakePermission()
+        let settings = fake.makeSettings(isOn: false)
+
+        await settings.setOn(true)
+
+        #expect(fake.asked == 1)
+        #expect(!settings.isOn && settings.denied)
+        #expect(fake.saved == [false])
+    }
+
+    @Test func turningNotificationsOffNeverAsks() async {
+        let fake = FakePermission()
+        let settings = fake.makeSettings(isOn: true)
+
+        await settings.setOn(false)
+
+        #expect(fake.asked == 0)
+        #expect(!settings.isOn && !settings.denied)
+        #expect(fake.saved == [false])
+    }
+
+    /// Abrir os Ajustes com o toggle ligado e as notificações desligadas no sistema mostra a legenda, sem pedir de novo
+    @Test func openingSettingsShowsTheCaptionWhenTheSystemDenies() async {
+        let fake = FakePermission()
+        fake.status = .denied
+        let on = fake.makeSettings(isOn: true)
+        let off = fake.makeSettings(isOn: false)
+
+        await on.reload()
+        await off.reload()
+
+        #expect(on.isOn && on.denied)
+        #expect(!off.denied)
+        #expect(fake.asked == 0)
+    }
+
+    /// QA: permissão zerada no sistema (nunca respondida) com o toggle gravado ligado: abrir os Ajustes mostra desligado,
+    /// e ligar de novo volta a pedir
+    @Test func openingSettingsTurnsTheToggleOffWhenPermissionWasNeverAnswered() async {
+        let fake = FakePermission()
+        fake.status = .notDetermined
+        fake.granted = true
+        let settings = fake.makeSettings(isOn: true)
+
+        await settings.reload()
+        #expect(!settings.isOn && !settings.denied)
+        #expect(fake.saved == [false])
+
+        await settings.setOn(true)
+        #expect(fake.asked == 1)
+        #expect(settings.isOn)
+    }
+
+    /// Abrir os Ajustes com o pedido do macOS ainda na tela (permissão ainda não respondida) não desliga o toggle
+    @Test func openingSettingsWhileThePromptIsUpKeepsTheToggleOn() async {
+        let fake = FakePermission()
+        fake.status = .notDetermined
+        fake.granted = true
+        fake.prompt = Gate()
+        let settings = fake.makeSettings(isOn: false)
+
+        let asking = Task { await settings.setOn(true) }
+        while fake.asked == 0 { await Task.yield() }
+        await settings.reload()
+        #expect(settings.isOn)
+        fake.prompt?.open()
+        await asking.value
+
+        #expect(settings.isOn && !settings.denied)
+        #expect(fake.saved == [true])
+    }
+
+    /// QA: desligar com o pedido do macOS ainda na tela e depois clicar em Permitir não religa o toggle
+    @Test func aPermissionAnswerAfterANewerToggleChangeIsIgnored() async {
+        let fake = FakePermission()
+        fake.granted = true
+        fake.prompt = Gate()
+        let settings = fake.makeSettings(isOn: false)
+
+        let asking = Task { await settings.setOn(true) }
+        while fake.asked == 0 { await Task.yield() }
+        await settings.setOn(false)
+        fake.prompt?.open()
+        await asking.value
+
+        #expect(!settings.isOn && !settings.denied)
+        #expect(fake.saved == [false])
     }
 }

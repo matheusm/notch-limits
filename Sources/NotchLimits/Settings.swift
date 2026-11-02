@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 // Ajustes: todas as contas, encontradas ou configuradas, com mostrar/esconder, ícone, nome e ordem.
 // Cada mudança confirmada grava o accounts.json e vale na hora, sem botão de salvar (D-014)
@@ -19,9 +20,11 @@ final class AccountSettings: ObservableObject {
         self.apply = apply
     }
 
-    /// Ao abrir: relê o accounts.json e a home e aplica, sem gravar (abrir não muda um arquivo feito à mão)
+    /// Ao abrir: relê o accounts.json e a home e aplica, sem gravar (abrir não muda um arquivo feito à mão).
+    /// A lista volta ao que está no disco, então o erro de uma gravação anterior não vale mais
     func reload() {
         list = loadAccounts(from: file, home: home)
+        saveError = nil
         apply(list)
     }
 
@@ -75,8 +78,71 @@ final class AccountSettings: ObservableObject {
     }
 }
 
+/// Toggle das notificações (R-06): a permissão só é pedida quando o usuário liga, nunca no launch nem num refresh
+@MainActor
+final class NotificationSettings: ObservableObject {
+    @Published private(set) var isOn: Bool          // o que o toggle mostra (ligado também com o pedido na tela)
+    @Published private(set) var denied = false      // mostra a legenda que manda para os Ajustes do Sistema
+    private var saved: Bool                         // o que está gravado: um pedido em aberto ainda não conta
+    private var changes = 0                         // toques no toggle, para descartar respostas atrasadas
+    private let save: (Bool) -> Void
+    private let requestPermission: () async -> Bool
+    private let authorization: () async -> UNAuthorizationStatus
+
+    init(isOn: Bool = UserDefaults.standard.bool(forKey: notifyLimitsKey),
+         save: @escaping (Bool) -> Void = { UserDefaults.standard.set($0, forKey: notifyLimitsKey) },
+         requestPermission: @escaping () async -> Bool = { await SystemNotifications.shared.requestPermission() },
+         authorization: @escaping () async -> UNAuthorizationStatus = { await SystemNotifications.shared.authorization() }) {
+        self.isOn = isOn
+        self.saved = isOn
+        self.save = save
+        self.requestPermission = requestPermission
+        self.authorization = authorization
+    }
+
+    /// Negado ou com erro, o toggle volta a desligado e a legenda aparece
+    func setOn(_ on: Bool) async {
+        changes += 1
+        let change = changes
+        isOn = on                                   // fica ligado enquanto o pedido do macOS está na tela
+        denied = false
+        guard on else {
+            store(false)
+            return
+        }
+        let granted = await requestPermission()
+        guard change == changes else { return }     // mexeram no toggle com o pedido na tela: vale o toque mais novo
+        isOn = granted
+        denied = !granted
+        store(granted)
+    }
+
+    /// Ao abrir os Ajustes mostra o estado real, sem pedir de novo: negado no sistema mostra a legenda; permissão
+    /// nunca respondida (ex.: zerada com tccutil) desliga, pois nada seria entregue, e ligar de novo volta a pedir
+    func reload() async {
+        guard saved else {
+            denied = false
+            return
+        }
+        let change = changes
+        let status = await authorization()
+        guard change == changes else { return }     // um toque durante a consulta vence
+        denied = status == .denied
+        if status == .notDetermined {
+            isOn = false
+            store(false)
+        }
+    }
+
+    private func store(_ on: Bool) {
+        saved = on
+        save(on)
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var model: AccountSettings
+    @ObservedObject var notifications: NotificationSettings
 
     var body: some View {
         Form {
@@ -109,9 +175,38 @@ struct SettingsView: View {
                 .font(.caption)
                 .fixedSize(horizontal: false, vertical: true)
             }
+            notificationsSection
         }
         .formStyle(.grouped)
         .frame(minWidth: 500, minHeight: 300)
+    }
+}
+
+extension SettingsView {
+    private var notificationsSection: some View {
+        Section {
+            Toggle(
+                tr(
+                    "Notify at 90% and when a limit resets",
+                    "Avisar em 90% e quando um limite resetar",
+                    "Avisar al 90% y cuando un límite se reinicie"
+                ),
+                isOn: Binding(get: { notifications.isOn }, set: { on in Task { await notifications.setOn(on) } })
+            )
+        } header: {
+            Text(tr("Notifications", "Notificações", "Notificaciones"))
+        } footer: {
+            if notifications.denied {
+                Text(tr(
+                    "Notifications for Notch Limits are off in System Settings → Notifications.",
+                    "As notificações do Notch Limits estão desativadas em Ajustes do Sistema → Notificações.",
+                    "Las notificaciones de Notch Limits están desactivadas en Ajustes del Sistema → Notificaciones."
+                ))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 }
 
@@ -200,19 +295,23 @@ final class SettingsWindow {
     static let shared = SettingsWindow()
     private var window: NSWindow?
     private var model: AccountSettings?
+    private var notifications: NotificationSettings?
 
     /// Cada clique na engrenagem relê o accounts.json e a home, mesmo com a janela aberta, e traz a mesma janela para a frente.
     /// Um nome sendo digitado não se perde: a linha só troca o rascunho quando o nome salvo daquela conta muda
     func show(store: Store) {
         let window = window ?? makeWindow(store: store)
         model?.reload()
+        if let notifications { Task { await notifications.reload() } }
         NSApp.activate(ignoringOtherApps: true)    // app LSUIElement: sem isso a janela abre atrás das outras
         window.makeKeyAndOrderFront(nil)
     }
 
     private func makeWindow(store: Store) -> NSWindow {
         let model = AccountSettings { list in store.setAccounts(list) }
-        let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))
+        let notifications = NotificationSettings()
+        let view = SettingsView(model: model, notifications: notifications)
+        let window = NSWindow(contentViewController: NSHostingController(rootView: view))
         window.title = tr("Notch Limits Settings", "Ajustes do Notch Limits", "Ajustes de Notch Limits")
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
@@ -220,6 +319,7 @@ final class SettingsWindow {
         window.setContentSize(NSSize(width: 540, height: 420))
         window.center()
         self.model = model
+        self.notifications = notifications
         self.window = window
         return window
     }

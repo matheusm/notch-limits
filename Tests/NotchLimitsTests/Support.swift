@@ -32,8 +32,8 @@ extension TempDir {
     }
 }
 
-func window(_ kind: WindowKind, _ percent: Double = 10) -> LimitWindow {
-    LimitWindow(kind: kind, percent: percent, resetsAt: nil)
+func window(_ kind: WindowKind, _ percent: Double = 10, resetsAt: Date? = nil) -> LimitWindow {
+    LimitWindow(kind: kind, percent: percent, resetsAt: resetsAt)
 }
 
 func usage(minutesAgo: Double, percent: Double = 10) -> Usage {

@@ -10,6 +10,12 @@ final class APICalls: @unchecked Sendable {
     func hit() { lock.withLock { count += 1 } }
 }
 
+/// Guarda cada relatório do Store ao notificador: ids das contas e o pico de cada uso
+@MainActor
+final class Reports {
+    var calls: [(accounts: [String], peaks: [String: Double?])] = []
+}
+
 /// Segura uma chamada à API até o teste liberar
 final class Gate: @unchecked Sendable {
     private let stream: AsyncStream<Void>
@@ -37,7 +43,8 @@ struct StoreTests {
 
     func makeStore(accounts: [Account],
                    local: @escaping (Account) -> Usage?,
-                   remote: @escaping (Account) async throws -> Usage = { _ in usage(minutesAgo: 0, percent: 50) }) -> Store {
+                   remote: @escaping (Account) async throws -> Usage = { _ in usage(minutesAgo: 0, percent: 50) },
+                   onRefresh: @escaping @MainActor ([Account], [String: Usage]) -> Void = { _, _ in }) -> Store {
         let calls = calls
         return Store(
             accounts: accounts,
@@ -46,6 +53,7 @@ struct StoreTests {
                 calls.hit()
                 return try await remote(acc)
             },
+            onRefresh: onRefresh,
             autoRefresh: false
         )
     }
@@ -100,6 +108,25 @@ struct StoreTests {
 
         #expect(store.usage[account.id]?.windows.isEmpty == true)
         #expect(store.usage[account.id]?.visibleError == "Token expired")
+    }
+
+    /// R-06: o notificador recebe o uso final uma vez por atualização, não uma vez por conta
+    @Test func refreshReportsTheFinalUsageOnce() async {
+        let other = other
+        let reports = Reports()
+        let store = makeStore(accounts: [account, other]) { acc in
+            acc.id == other.id ? usage(minutesAgo: 1, percent: 30) : usage(minutesAgo: 11, percent: 20)
+        } onRefresh: { accounts, usage in
+            reports.calls.append((accounts.map(\.id), usage.mapValues(\.peak)))
+        }
+
+        await store.refresh()
+        #expect(reports.calls.count == 1)
+        #expect(reports.calls.first?.accounts == [account.id, other.id])
+        #expect(reports.calls.first?.peaks == [account.id: 50, other.id: 30])   // a API já respondeu para a conta velha
+
+        await store.refresh(network: false)
+        #expect(reports.calls.count == 2)
     }
 
     // MARK: - Contas ao vivo (Ajustes)
@@ -250,5 +277,18 @@ struct UsageTests {
         #expect(fresh.visibleError == nil)
         #expect(stale.isStale && stale.visibleError == "x")
         #expect(Usage(error: "x").visibleError == "x")
+    }
+
+    /// R-06: o relógio é injetado; com exatamente 15 min ainda vale, sem janelas ou sem data não vale
+    @Test func usableMeansWindowsAndAtMostFifteenMinutesOld() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let read = { (minutesAgo: Double) in Usage(windows: [window(.weekly)], updatedAt: now.addingTimeInterval(-minutesAgo * 60)) }
+
+        #expect(read(15).isUsable(at: now))
+        #expect(!read(15).isStale(at: now))
+        #expect(!read(15.1).isUsable(at: now))
+        #expect(read(15.1).isStale(at: now))
+        #expect(!Usage(updatedAt: now).isUsable(at: now))
+        #expect(!Usage(windows: [window(.weekly)]).isUsable(at: now))
     }
 }
