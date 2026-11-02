@@ -19,8 +19,8 @@ struct Account: Identifiable {
 struct AccountConfig: Decodable {
     let name: String
     let provider: String             // "claude" | "codex"
-    var path: String? = nil          // claude: CLAUDE_CONFIG_DIR (padrão ~/.claude) · codex: CODEX_HOME (padrão ~/.codex)
-    var icon: String? = nil          // "claude", "codex" ou nome de um SF Symbol
+    var path: String?                // claude: CLAUDE_CONFIG_DIR (padrão ~/.claude) · codex: CODEX_HOME (padrão ~/.codex)
+    var icon: String?                // "claude", "codex" ou nome de um SF Symbol
 }
 
 let home = FileManager.default.homeDirectoryForCurrentUser.path
@@ -29,9 +29,9 @@ let configFile = "\(home)/.config/notch-limits/accounts.json"
 let accounts: [Account] = loadAccounts(from: configFile)
 
 private func expand(_ path: String) -> String {
-    var p = (path as NSString).expandingTildeInPath
-    while p.count > 1 && p.hasSuffix("/") { p.removeLast() }
-    return p
+    var expanded = (path as NSString).expandingTildeInPath
+    while expanded.count > 1 && expanded.hasSuffix("/") { expanded.removeLast() }
+    return expanded
 }
 
 func loadAccounts(from file: String) -> [Account] {
@@ -40,17 +40,19 @@ func loadAccounts(from file: String) -> [Account] {
        let parsed = try? JSONDecoder().decode([AccountConfig].self, from: data), !parsed.isEmpty {
         configs = parsed
     }
-    return configs.enumerated().compactMap { i, c in
-        let glyph: Glyph = switch c.icon ?? c.provider {
+    return configs.enumerated().compactMap { index, config in
+        let glyph: Glyph = switch config.icon ?? config.provider {
         case "claude": .claude
         case "codex": .codex
         case let symbol: .symbol(symbol)
         }
-        switch c.provider {
+        switch config.provider {
         case "claude":
-            return Account(id: "\(i)", name: c.name, glyph: glyph, provider: .claude(configDir: expand(c.path ?? "~/.claude")))
+            let dir = expand(config.path ?? "~/.claude")
+            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .claude(configDir: dir))
         case "codex":
-            return Account(id: "\(i)", name: c.name, glyph: glyph, provider: .codex(home: expand(c.path ?? "~/.codex")))
+            let dir = expand(config.path ?? "~/.codex")
+            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .codex(home: dir))
         default:
             return nil
         }
@@ -74,17 +76,17 @@ struct LimitWindow: Identifiable {
 
     var label: String {
         switch kind {
-        case .session(let h): L("\(h)h session", "Sessão \(h)h", "Sesión \(h)h")
-        case .weekly: L("Weekly", "Semana", "Semanal")
-        case .weeklyModel(let model): "\(L("Weekly", "Semana", "Semanal")) · \(model)"
-        case .days(let d): "\(d)d"
+        case .session(let hours): tr("\(hours)h session", "Sessão \(hours)h", "Sesión \(hours)h")
+        case .weekly: tr("Weekly", "Semana", "Semanal")
+        case .weeklyModel(let model): "\(tr("Weekly", "Semana", "Semanal")) · \(model)"
+        case .days(let days): "\(days)d"
         }
     }
 
     /// Versão compacta usada no notch
     var shortLabel: String {
         switch kind {
-        case .session(let h): "\(h)h"
+        case .session(let hours): "\(hours)h"
         case .weeklyModel(let model): model
         default: label
         }
@@ -110,20 +112,22 @@ struct Usage {
     /// Mostra o erro só quando não há dado útil para exibir no lugar
     var visibleError: String? { windows.isEmpty || isStale ? error : nil }
 
-    static func newest(_ a: Usage?, _ b: Usage?) -> Usage? {
-        let candidates = [a, b].compactMap { $0 }.filter { !$0.windows.isEmpty && $0.updatedAt != nil }
-        return candidates.max { $0.updatedAt! < $1.updatedAt! }
+    static func newest(_ first: Self?, _ second: Self?) -> Self? {
+        [first, second]
+            .compactMap { $0 }
+            .filter { !$0.windows.isEmpty && $0.updatedAt != nil }
+            .max { ($0.updatedAt ?? .distantPast) < ($1.updatedAt ?? .distantPast) }
     }
 }
 
 /// "atualizado há 3 min" no idioma da interface
 func ageText(_ date: Date?) -> String {
     guard let date else { return "" }
-    if Date().timeIntervalSince(date) < 60 { return L("updated just now", "atualizado agora", "actualizado ahora") }
-    let f = RelativeDateTimeFormatter()
-    f.locale = uiLocale
-    f.unitsStyle = .short
-    return "\(L("updated", "atualizado", "actualizado")) \(f.localizedString(for: date, relativeTo: Date()))"
+    if Date().timeIntervalSince(date) < 60 { return tr("updated just now", "atualizado agora", "actualizado ahora") }
+    let formatter = RelativeDateTimeFormatter()
+    formatter.locale = uiLocale
+    formatter.unitsStyle = .short
+    return "\(tr("updated", "atualizado", "actualizado")) \(formatter.localizedString(for: date, relativeTo: Date()))"
 }
 
 // MARK: - Store
@@ -183,18 +187,18 @@ final class Store: ObservableObject {
                     }
                 }
             }
-            for await r in group {
-                var u = r.usage ?? Usage()
-                if u.plan == nil { u.plan = current[r.id]?.plan }
-                if r.calledAPI {
-                    u.error = r.error?.localizedDescription
-                    if let wait = (r.error as? UsageError)?.retryAfter {
-                        blockedUntil[r.id] = Date().addingTimeInterval(wait)
+            for await result in group {
+                var updated = result.usage ?? Usage()
+                if updated.plan == nil { updated.plan = current[result.id]?.plan }
+                if result.calledAPI {
+                    updated.error = result.error?.localizedDescription
+                    if let wait = (result.error as? UsageError)?.retryAfter {
+                        blockedUntil[result.id] = Date().addingTimeInterval(wait)
                     }
                 } else {
-                    u.error = current[r.id]?.error   // sem nova tentativa, mantém o último erro conhecido
+                    updated.error = current[result.id]?.error   // sem nova tentativa, mantém o último erro conhecido
                 }
-                usage[r.id] = u
+                usage[result.id] = updated
             }
         }
         loading = false
@@ -208,6 +212,15 @@ final class Store: ObservableObject {
 
 // MARK: - UI
 
+/// Liga/desliga o app como item de login (falha silenciosa: o toggle reflete o pedido do usuário)
+func setLaunchAtLogin(_ enabled: Bool) {
+    if enabled {
+        try? SMAppService.mainApp.register()
+    } else {
+        try? SMAppService.mainApp.unregister()
+    }
+}
+
 /// Cor só para alerta (≥70% laranja, ≥90% vermelho); abaixo disso fica neutro
 func alertColor(for pct: Double) -> Color? {
     pct >= 90 ? .red : pct >= 70 ? .orange : nil
@@ -217,23 +230,25 @@ func alertColor(for pct: Double) -> Color? {
 func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> String {
     guard let date else { return "" }
     let secs = date.timeIntervalSinceNow
-    if secs <= 0 { return L("reset", "resetou", "reiniciado") }
+    if secs <= 0 { return tr("reset", "resetou", "reiniciado") }
     if countdown {
-        let h = Int(secs) / 3600, m = Int(secs) % 3600 / 60
-        let t = h > 0 ? "\(h)h\(String(format: "%02d", m))" : "\(m)min"
-        return short ? L("in \(t)", "em \(t)", "en \(t)") : L("resets in \(t)", "reseta em \(t)", "se reinicia en \(t)")
+        let hours = Int(secs) / 3600, minutes = Int(secs) % 3600 / 60
+        let left = hours > 0 ? "\(hours)h\(String(format: "%02d", minutes))" : "\(minutes)min"
+        return short
+            ? tr("in \(left)", "em \(left)", "en \(left)")
+            : tr("resets in \(left)", "reseta em \(left)", "se reinicia en \(left)")
     }
     // arredonda pro minuto mais próximo (a API manda 00:59:59.9 para resets "às 01:00")
-    let d = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)
-    let cal = Calendar.current
-    let f = DateFormatter()
-    f.locale = uiLocale
-    f.dateFormat = "EEE"
-    let day = cal.isDateInToday(d) ? L("today", "hoje", "hoy")
-        : cal.isDateInTomorrow(d) ? L("tomorrow", "amanhã", "mañana") : f.string(from: d)
-    f.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
-    let t = "\(day) \(f.string(from: d))"
-    return short ? t : L("resets \(t)", "reseta \(t)", "se reinicia \(t)")
+    let rounded = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)
+    let calendar = Calendar.current
+    let formatter = DateFormatter()
+    formatter.locale = uiLocale
+    formatter.dateFormat = "EEE"
+    let day = calendar.isDateInToday(rounded) ? tr("today", "hoje", "hoy")
+        : calendar.isDateInTomorrow(rounded) ? tr("tomorrow", "amanhã", "mañana") : formatter.string(from: rounded)
+    formatter.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
+    let when = "\(day) \(formatter.string(from: rounded))"
+    return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
 }
 
 struct AccountView: View {
@@ -259,16 +274,16 @@ struct AccountView: View {
                 Label(err, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
             }
             if let windows = usage?.windows, !windows.isEmpty {
-                ForEach(windows) { w in
+                ForEach(windows) { limit in
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
-                            Text(w.label).font(.caption)
+                            Text(limit.label).font(.caption)
                             Spacer()
-                            Text("\(Int(w.percent.rounded()))%").font(.caption.monospacedDigit().bold())
-                                .foregroundStyle(alertColor(for: w.percent) ?? .primary)
+                            Text("\(Int(limit.percent.rounded()))%").font(.caption.monospacedDigit().bold())
+                                .foregroundStyle(alertColor(for: limit.percent) ?? .primary)
                         }
-                        ProgressView(value: min(w.percent, 100), total: 100).tint(alertColor(for: w.percent) ?? .gray)
-                        Text(resetText(w.resetsAt, countdown: w.isSession)).font(.caption2).foregroundStyle(.secondary)
+                        ProgressView(value: min(limit.percent, 100), total: 100).tint(alertColor(for: limit.percent) ?? .gray)
+                        Text(resetText(limit.resetsAt, countdown: limit.isSession)).font(.caption2).foregroundStyle(.secondary)
                     }
                 }
             } else if usage == nil {
@@ -295,21 +310,23 @@ struct ContentView: View {
                 Button {
                     Task { await store.refresh(force: true) }
                 } label: {
-                    if store.loading { ProgressView().controlSize(.mini) } else { Image(systemName: "arrow.clockwise") }
+                    if store.loading {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Image(systemName: "arrow.clockwise").accessibilityLabel(tr("Refresh", "Atualizar", "Actualizar"))
+                    }
                 }
                 .buttonStyle(.borderless)
-                .help(L("Refresh", "Atualizar", "Actualizar"))
+                .help(tr("Refresh", "Atualizar", "Actualizar"))
             }
             HStack {
-                Toggle(L("Launch at login", "Abrir no login", "Abrir al iniciar sesión"), isOn: $launchAtLogin)
+                Toggle(tr("Launch at login", "Abrir no login", "Abrir al iniciar sesión"), isOn: $launchAtLogin)
                     .toggleStyle(.checkbox).font(.caption)
-                    .onChange(of: launchAtLogin) { _, on in
-                        try? on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
-                    }
+                    .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
                 Toggle("Notch", isOn: $showNotch)
                     .toggleStyle(.checkbox).font(.caption)
                 Spacer()
-                Button(L("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
+                Button(tr("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
             }
         }
         .padding(14)

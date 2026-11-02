@@ -10,33 +10,35 @@ enum Glyph {
 /// Starburst do Claude: raios em cápsula alternando comprimento
 struct ClaudeMark: Shape {
     func path(in rect: CGRect) -> Path {
-        let r = min(rect.width, rect.height) / 2
-        let w = r * 0.26
-        var p = Path()
-        for i in 0..<12 {
-            let len = r * (i % 2 == 0 ? 1.0 : 0.78)
-            let ray = Path(roundedRect: CGRect(x: -w / 2, y: -len, width: w, height: len), cornerRadius: w / 2)
-            let t = CGAffineTransform(translationX: rect.midX, y: rect.midY)
-                .rotated(by: Double(i) / 12 * 2 * .pi + 0.13)
-            p.addPath(ray, transform: t)
+        let radius = min(rect.width, rect.height) / 2
+        let width = radius * 0.26
+        var path = Path()
+        for index in 0..<12 {
+            let length = radius * (index.isMultiple(of: 2) ? 1.0 : 0.78)
+            let ray = Path(roundedRect: CGRect(x: -width / 2, y: -length, width: width, height: length), cornerRadius: width / 2)
+            let transform = CGAffineTransform(translationX: rect.midX, y: rect.midY)
+                .rotated(by: Double(index) / 12 * 2 * .pi + 0.13)
+            path.addPath(ray, transform: transform)
         }
-        return p
+        return path
     }
 }
 
 /// Flor da OpenAI simplificada: 6 pétalas entrelaçadas
 struct CodexMark: Shape {
     func path(in rect: CGRect) -> Path {
-        let r = min(rect.width, rect.height) / 2
-        var p = Path()
-        for i in 0..<6 {
-            let petal = Path(roundedRect: CGRect(x: -r * 0.05, y: -r * 0.95, width: r * 0.5, height: r * 0.9),
-                             cornerRadius: r * 0.25)
-            let t = CGAffineTransform(translationX: rect.midX, y: rect.midY)
-                .rotated(by: Double(i) / 6 * 2 * .pi)
-            p.addPath(petal, transform: t)
+        let radius = min(rect.width, rect.height) / 2
+        var path = Path()
+        for index in 0..<6 {
+            let petal = Path(
+                roundedRect: CGRect(x: -radius * 0.05, y: -radius * 0.95, width: radius * 0.5, height: radius * 0.9),
+                cornerRadius: radius * 0.25
+            )
+            let transform = CGAffineTransform(translationX: rect.midX, y: rect.midY)
+                .rotated(by: Double(index) / 6 * 2 * .pi)
+            path.addPath(petal, transform: transform)
         }
-        return p
+        return path
     }
 }
 
@@ -44,7 +46,7 @@ struct RingIcon: View {
     let percent: Double?
     let glyph: Glyph
     var tint: Color = .black            // anel e logo (preto = template na barra)
-    var progressTint: Color? = nil      // cor do progresso, padrão = tint
+    var progressTint: Color?            // cor do progresso, padrão = tint
     var size: CGFloat = 16
 
     var body: some View {
@@ -66,7 +68,12 @@ struct RingIcon: View {
         switch glyph {
         case .claude: ClaudeMark().fill(tint).frame(width: size * 0.56, height: size * 0.56)
         case .codex: CodexMark().stroke(tint, lineWidth: size / 18).frame(width: size * 0.56, height: size * 0.56)
-        case .symbol(let name): Image(systemName: name).font(.system(size: size / 2, weight: .semibold)).foregroundStyle(tint)
+        case .symbol(let name):
+            // decorativo: o nome da conta acompanha o anel
+            Image(systemName: name)
+                .font(.system(size: size / 2, weight: .semibold))
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
         }
     }
 }

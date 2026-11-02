@@ -18,7 +18,7 @@ let lang = preferred.lang
 let uiLocale = Locale(identifier: preferred.id)
 
 /// Escolhe o texto do idioma atual
-func L(_ en: String, _ pt: String, _ es: String) -> String {
+func tr(_ en: String, _ pt: String, _ es: String) -> String {
     switch lang {
     case .en: en
     case .pt: pt

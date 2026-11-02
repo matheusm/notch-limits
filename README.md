@@ -67,6 +67,17 @@ cd notch-limits
 swift test          # run the test suite
 ```
 
+### Contributing
+
+Code must pass the same checks CI runs on every push and pull request:
+
+```bash
+brew install swiftlint
+swiftlint lint --strict   # strict style rules (.swiftlint.yml); any warning fails
+swift build               # compiler warnings are errors
+swift test
+```
+
 ## Configuration
 
 Out of the box, it tracks the default Claude Code account (`~/.claude`) and Codex (`~/.codex`).
@@ -137,7 +148,7 @@ These are the same endpoints that Claude Code's `/usage` and Codex's `/status` u
 
 ## Notes
 
-- The UI is available in English, Portuguese and Spanish (System Settings → General → Language & Region). PRs adding more languages are welcome; all strings live in `L(en, pt, es)` calls (see `Sources/NotchLimits/L10n.swift`).
+- The UI is available in English, Portuguese and Spanish (System Settings → General → Language & Region). PRs adding more languages are welcome; all strings live in `tr(en, pt, es)` calls (see `Sources/NotchLimits/L10n.swift`).
 - The endpoints above are undocumented and may change without notice.
 - This is an unofficial community project. It is not affiliated with or endorsed by Anthropic or OpenAI. "Claude" and "Codex" are trademarks of their respective owners.
 

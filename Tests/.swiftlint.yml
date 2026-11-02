@@ -1,0 +1,4 @@
+# Fixtures de teste podem falhar alto: try!/! deixam o teste quebrar no ponto exato do problema
+disabled_rules:
+  - force_try
+  - force_unwrapping

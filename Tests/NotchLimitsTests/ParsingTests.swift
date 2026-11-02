@@ -9,8 +9,12 @@ struct ParsingTests {
             "limits": [
                 ["kind": "session", "percent": 12.0, "resets_at": NSNull()],
                 ["kind": "weekly_all", "percent": 16.0, "resets_at": "2026-11-03T01:00:00.841086+00:00"],
-                ["kind": "weekly_scoped", "percent": 10.0, "resets_at": "2026-11-03T14:00:00+00:00",
-                 "scope": ["model": ["display_name": "Fable"]]],
+                [
+                    "kind": "weekly_scoped",
+                    "percent": 10.0,
+                    "resets_at": "2026-11-03T14:00:00+00:00",
+                    "scope": ["model": ["display_name": "Fable"]],
+                ],
                 ["kind": "weekly_scoped", "resets_at": NSNull()],   // sem percent: ignorado
             ],
         ])
@@ -41,9 +45,9 @@ struct ParsingTests {
         (["used_percent": 36.0, "window_minutes": 300], .session(hours: 5)),
     ] as [([String: Any], WindowKind)])
     func codexWindowLengthMapsToKind(raw: [String: Any], kind: WindowKind) {
-        let w = codexWindow(raw, minutesKey: "window_minutes", secondsKey: "limit_window_seconds", resetKey: "reset_at")
-        #expect(w?.kind == kind)
-        #expect(w?.percent == 36)
+        let limit = codexWindow(raw, minutesKey: "window_minutes", secondsKey: "limit_window_seconds", resetKey: "reset_at")
+        #expect(limit?.kind == kind)
+        #expect(limit?.percent == 36)
     }
 
     @Test func codexWindowWithoutPercentIsSkipped() {

@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          swiftlint lint --strict --reporter github-actions-logging
+
+      - name: Build (warnings as errors)
+        run: swift build -c release
+
+      - name: Test
+        run: swift test

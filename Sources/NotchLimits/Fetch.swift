@@ -26,7 +26,7 @@ func remoteUsage(_ acc: Account) async throws -> Usage {
 
 struct UsageError: LocalizedError {
     let errorDescription: String?
-    var retryAfter: TimeInterval? = nil   // preenchido quando a API responde 429
+    var retryAfter: TimeInterval?   // preenchido quando a API responde 429
     init(_ msg: String, retryAfter: TimeInterval? = nil) {
         errorDescription = msg
         self.retryAfter = retryAfter
@@ -34,7 +34,11 @@ struct UsageError: LocalizedError {
 }
 
 private var tokenExpired: UsageError {
-    UsageError(L("Token expired — open the CLI to renew it", "Token expirado — abra o CLI para renovar", "Token expirado — abre la CLI para renovarlo"))
+    UsageError(tr(
+        "Token expired — open the CLI to renew it",
+        "Token expirado — abra o CLI para renovar",
+        "Token expirado — abre la CLI para renovarlo"
+    ))
 }
 
 private func readJSON(_ path: String) -> [String: Any]? {
@@ -42,17 +46,18 @@ private func readJSON(_ path: String) -> [String: Any]? {
     return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
 }
 
-func parseISO(_ s: String?) -> Date? {
-    guard let s else { return nil }
-    let f = ISO8601DateFormatter()
-    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    if let d = f.date(from: s) { return d }
-    f.formatOptions = [.withInternetDateTime]
-    return f.date(from: s)
+func parseISO(_ text: String?) -> Date? {
+    guard let text else { return nil }
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = formatter.date(from: text) { return date }
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter.date(from: text)
 }
 
 private func get(_ url: String, headers: [String: String]) async throws -> Any {
-    var req = URLRequest(url: URL(string: url)!, timeoutInterval: 20)
+    guard let endpoint = URL(string: url) else { throw UsageError("Invalid URL \(url)") }
+    var req = URLRequest(url: endpoint, timeoutInterval: 20)
     headers.forEach { req.setValue($1, forHTTPHeaderField: $0) }
     let (data, resp) = try await URLSession.shared.data(for: req)
     let http = resp as? HTTPURLResponse
@@ -70,8 +75,12 @@ func httpError(status: Int, retryAfter: String?) -> UsageError? {
     case 429:
         let wait = retryAfter.flatMap(TimeInterval.init) ?? 300
         let min = max(1, Int((wait / 60).rounded(.up)))
-        return UsageError(L("API rate limited — retrying in \(min) min", "A API limitou as consultas — tenta de novo em \(min) min",
-                            "La API limitó las consultas — reintento en \(min) min"), retryAfter: wait)
+        let message = tr(
+            "API rate limited — retrying in \(min) min",
+            "A API limitou as consultas — tenta de novo em \(min) min",
+            "La API limitó las consultas — reintento en \(min) min"
+        )
+        return UsageError(message, retryAfter: wait)
     default: return UsageError("HTTP \(status)")
     }
 }
@@ -80,17 +89,21 @@ func httpError(status: Int, retryAfter: String?) -> UsageError? {
 
 private func runSecurity(_ service: String) throws -> Data {
     // Usa o binário `security`, que já está na ACL do item criado pelo Claude Code (sem prompt)
-    let p = Process()
-    p.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-    p.arguments = ["find-generic-password", "-s", service, "-w"]
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+    process.arguments = ["find-generic-password", "-s", service, "-w"]
     let out = Pipe()
-    p.standardOutput = out
-    p.standardError = Pipe()
-    try p.run()
+    process.standardOutput = out
+    process.standardError = Pipe()
+    try process.run()
     let data = out.fileHandleForReading.readDataToEndOfFile()
-    p.waitUntilExit()
-    guard p.terminationStatus == 0 else {
-        throw UsageError(L("Credential not found in Keychain", "Credencial não encontrada no Keychain", "Credencial no encontrada en el Llavero"))
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else {
+        throw UsageError(tr(
+            "Credential not found in Keychain",
+            "Credencial não encontrada no Keychain",
+            "Credencial no encontrada en el Llavero"
+        ))
     }
     return data
 }
@@ -105,34 +118,33 @@ func keychainService(for configDir: String) -> String {
 private func claudeCredentials(configDir: String) throws -> [String: Any] {
     let raw = try runSecurity(keychainService(for: configDir))
     guard let creds = (try JSONSerialization.jsonObject(with: raw) as? [String: Any])?["claudeAiOauth"] as? [String: Any]
-    else { throw UsageError(L("Invalid credential", "Credencial inválida", "Credencial no válida")) }
+    else { throw UsageError(tr("Invalid credential", "Credencial inválida", "Credencial no válida")) }
     return creds
 }
 
 private func claudePlan(_ creds: [String: Any]) -> String {
-    [creds["subscriptionType"] as? String,
-     (creds["rateLimitTier"] as? String).flatMap { $0.split(separator: "_").last.map(String.init) }]
-        .compactMap { $0 }.joined(separator: " ")
+    let tier = (creds["rateLimitTier"] as? String).flatMap { $0.split(separator: "_").last.map(String.init) }
+    return [creds["subscriptionType"] as? String, tier].compactMap { $0 }.joined(separator: " ")
 }
 
 /// Converte a resposta de /api/oauth/usage (a mesma que o Claude Code guarda em cache)
 func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
     var windows: [LimitWindow] = []
     if let limits = json["limits"] as? [[String: Any]] {
-        for l in limits {
-            guard let pct = l["percent"] as? Double else { continue }
-            let model = ((l["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
-            let kind: WindowKind = switch l["kind"] as? String {
+        for limit in limits {
+            guard let pct = limit["percent"] as? Double else { continue }
+            let model = ((limit["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
+            let kind: WindowKind = switch limit["kind"] as? String {
             case "session": .session(hours: 5)
             case "weekly_all": .weekly
-            default: .weeklyModel(model ?? L("other", "outro", "otro"))
+            default: .weeklyModel(model ?? tr("other", "outro", "otro"))
             }
-            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(l["resets_at"] as? String)))
+            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(limit["resets_at"] as? String)))
         }
     } else {
         for (key, kind) in [("five_hour", WindowKind.session(hours: 5)), ("seven_day", .weekly)] {
-            guard let w = json[key] as? [String: Any], let pct = w["utilization"] as? Double else { continue }
-            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(w["resets_at"] as? String)))
+            guard let entry = json[key] as? [String: Any], let pct = entry["utilization"] as? Double else { continue }
+            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(entry["resets_at"] as? String)))
         }
     }
     return windows
@@ -153,7 +165,7 @@ func localClaude(configDir: String) -> Usage? {
 private func fetchClaude(configDir: String) async throws -> Usage {
     let creds = try await Task.detached { try claudeCredentials(configDir: configDir) }.value
     guard let token = creds["accessToken"] as? String else {
-        throw UsageError(L("Invalid credential", "Credencial inválida", "Credencial no válida"))
+        throw UsageError(tr("Invalid credential", "Credencial inválida", "Credencial no válida"))
     }
     if let exp = creds["expiresAt"] as? Double, exp / 1000 < Date().timeIntervalSince1970 { throw tokenExpired }
 
@@ -167,11 +179,11 @@ private func fetchClaude(configDir: String) async throws -> Usage {
 
 // MARK: - Codex
 
-func codexWindow(_ w: [String: Any]?, minutesKey: String, secondsKey: String, resetKey: String) -> LimitWindow? {
-    guard let w, let pct = w["used_percent"] as? Double else { return nil }
-    let secs = (w[minutesKey] as? Int).map { $0 * 60 } ?? (w[secondsKey] as? Int) ?? 0
+func codexWindow(_ raw: [String: Any]?, minutesKey: String, secondsKey: String, resetKey: String) -> LimitWindow? {
+    guard let raw, let pct = raw["used_percent"] as? Double else { return nil }
+    let secs = (raw[minutesKey] as? Int).map { $0 * 60 } ?? (raw[secondsKey] as? Int) ?? 0
     let kind: WindowKind = secs >= 604_800 ? .weekly : secs >= 86_400 ? .days(secs / 86_400) : .session(hours: secs / 3600)
-    let reset = (w[resetKey] as? Double).map { Date(timeIntervalSince1970: $0) }
+    let reset = (raw[resetKey] as? Double).map { Date(timeIntervalSince1970: $0) }
     return LimitWindow(kind: kind, percent: pct, resetsAt: reset)
 }
 
@@ -222,7 +234,13 @@ func localCodex(codexHome: String) -> Usage? {
 private func fetchCodex(codexHome: String) async throws -> Usage {
     guard let tokens = readJSON("\(codexHome)/auth.json")?["tokens"] as? [String: Any],
           let token = tokens["access_token"] as? String
-    else { throw UsageError(L("auth.json not found — log in to Codex", "auth.json não encontrado — faça login no Codex", "auth.json no encontrado — inicia sesión en Codex")) }
+    else {
+        throw UsageError(tr(
+            "auth.json not found — log in to Codex",
+            "auth.json não encontrado — faça login no Codex",
+            "auth.json no encontrado — inicia sesión en Codex"
+        ))
+    }
 
     var headers = ["Authorization": "Bearer \(token)", "User-Agent": "codex_cli_rs"]
     if let acc = tokens["account_id"] as? String { headers["ChatGPT-Account-Id"] = acc }

@@ -5,6 +5,13 @@
 set -e
 cd "$(dirname "$0")"
 
+# lint rígido antes de compilar (o CI exige; localmente só avisa se o SwiftLint não estiver instalado)
+if command -v swiftlint >/dev/null; then
+  swiftlint lint --strict --quiet
+else
+  echo "⚠︎ SwiftLint não encontrado (brew install swiftlint); pulando o lint" >&2
+fi
+
 VERSION="$(git describe --tags --abbrev=0 2>/dev/null || true)"
 VERSION="${VERSION#v}"
 VERSION="${VERSION:-1.0.0}"

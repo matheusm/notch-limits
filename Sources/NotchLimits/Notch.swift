@@ -46,7 +46,7 @@ struct NotchView: View {
                 NotchDetailView(store: store)
                     .background(GeometryReader { geo in
                         Color.clear.onAppear { model.contentHeight = geo.size.height }
-                            .onChange(of: geo.size.height) { _, h in model.contentHeight = h }
+                            .onChange(of: geo.size.height) { _, height in model.contentHeight = height }
                     })
                     .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
@@ -67,8 +67,12 @@ struct NotchView: View {
         HStack(spacing: 5) {
             ForEach(Array(items)) { acc in
                 let peak = store.usage[acc.id]?.peak
-                RingIcon(percent: peak, glyph: acc.glyph, tint: .white,
-                         progressTint: peak.flatMap(alertColor(for:)) ?? ringGray)
+                RingIcon(
+                    percent: peak,
+                    glyph: acc.glyph,
+                    tint: .white,
+                    progressTint: peak.flatMap(alertColor(for:)) ?? ringGray
+                )
             }
         }
     }
@@ -101,20 +105,24 @@ private struct NotchDetailView: View {
     private var footer: some View {
         HStack(spacing: 6) {
             Spacer()
-            chip(L("Login", "Login", "Inicio"), on: launchAtLogin) {
+            chip(tr("Login", "Login", "Inicio"), on: launchAtLogin) {
                 launchAtLogin.toggle()
-                try? launchAtLogin ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                setLaunchAtLogin(launchAtLogin)
             }
             chip("Notch", on: showNotch) { showNotch.toggle() }
-            iconButton(store.loading ? "ellipsis" : "arrow.clockwise") { Task { await store.refresh(force: true) } }
-            iconButton("power") { NSApp.terminate(nil) }
+            iconButton(store.loading ? "ellipsis" : "arrow.clockwise", label: tr("Refresh", "Atualizar", "Actualizar")) {
+                Task { await store.refresh(force: true) }
+            }
+            iconButton("power", label: tr("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }
         }
     }
 
     private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 3) {
-                Image(systemName: on ? "checkmark" : "circle.dashed").font(.system(size: 8, weight: .bold))
+                Image(systemName: on ? "checkmark" : "circle.dashed")
+                    .font(.system(size: 8, weight: .bold))
+                    .accessibilityHidden(true)   // o estado vai no traço de botão selecionado
                 Text(title)
             }
             .font(.system(size: 10, weight: .medium))
@@ -123,11 +131,13 @@ private struct NotchDetailView: View {
             .foregroundStyle(on ? .white : dim)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
-    private func iconButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+    private func iconButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .accessibilityLabel(label)
                 .font(.system(size: 10, weight: .semibold))
                 .frame(width: 22, height: 20)
                 .background(.white.opacity(0.08), in: Circle())
@@ -143,8 +153,13 @@ private struct NotchAccountRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            RingIcon(percent: usage?.peak, glyph: account.glyph, tint: .white,
-                     progressTint: usage?.peak.flatMap(alertColor(for:)) ?? ringGray, size: 34)
+            RingIcon(
+                percent: usage?.peak,
+                glyph: account.glyph,
+                tint: .white,
+                progressTint: usage?.peak.flatMap(alertColor(for:)) ?? ringGray,
+                size: 34
+            )
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -177,15 +192,15 @@ private struct NotchAccountRow: View {
                 if let windows = usage?.windows, !windows.isEmpty {
                     // colunas de largura fixa para as barras alinharem entre contas
                     VStack(spacing: 7) {
-                        ForEach(windows) { w in
+                        ForEach(windows) { limit in
                             HStack(spacing: 10) {
-                                Text(w.shortLabel).font(.system(size: 11)).foregroundStyle(dim)
+                                Text(limit.shortLabel).font(.system(size: 11)).foregroundStyle(dim)
                                     .frame(width: 46, alignment: .leading)
-                                UsageBar(percent: w.percent)
-                                Text("\(Int(w.percent.rounded()))%")
+                                UsageBar(percent: limit.percent)
+                                Text("\(Int(limit.percent.rounded()))%")
                                     .font(.system(size: 11, weight: .medium).monospacedDigit())
                                     .frame(width: 32, alignment: .trailing)
-                                Text(resetText(w.resetsAt, short: true, countdown: w.isSession))
+                                Text(resetText(limit.resetsAt, short: true, countdown: limit.isSession))
                                     .font(.system(size: 10).monospacedDigit()).foregroundStyle(dim)
                                     .frame(width: 96, alignment: .trailing)
                             }
@@ -239,8 +254,11 @@ final class NotchController {
         host.sizingOptions = []
         panel.contentView = host
 
-        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
-                                               object: nil, queue: .main) { [weak self] _ in
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
             MainActor.assumeIsolated { self?.layout() }
         }
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -267,8 +285,13 @@ final class NotchController {
         let height = screen.safeAreaInsets.top
         notchRect = NSRect(x: left.maxX, y: top - height, width: right.minX - left.maxX, height: height)
         model.notchSize = notchRect.size
-        panel.setFrame(NSRect(x: notchRect.midX - expandedWidth / 2 - 40, y: top - windowHeight,
-                              width: expandedWidth + 80, height: windowHeight), display: true)
+        let frame = NSRect(
+            x: notchRect.midX - expandedWidth / 2 - 40,
+            y: top - windowHeight,
+            width: expandedWidth + 80,
+            height: windowHeight
+        )
+        panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
         AppState.shared.notchVisible = true
     }
@@ -281,8 +304,8 @@ final class NotchController {
         let now = Date()
         let area: NSRect
         if model.expanded {
-            let h = notchRect.height + model.contentHeight
-            area = NSRect(x: notchRect.midX - expandedWidth / 2, y: notchRect.maxY - h, width: expandedWidth, height: h)
+            let height = notchRect.height + model.contentHeight
+            area = NSRect(x: notchRect.midX - expandedWidth / 2, y: notchRect.maxY - height, width: expandedWidth, height: height)
         } else {
             area = notchRect.insetBy(dx: -earWidth, dy: 0)
         }

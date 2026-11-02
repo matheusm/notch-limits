@@ -32,9 +32,12 @@ struct LocalSnapshotTests {
     @Test func readsLatestCodexRateLimits() {
         let dir = TempDir()
         let event = { (time: String, pct: Double) in
-            #"{"timestamp":"\#(time)","type":"event_msg","payload":{"type":"token_count","rate_limits":{"primary":{"used_percent":\#(pct),"window_minutes":10080,"resets_at":1793793564},"secondary":null,"plan_type":"prolite"}}}"#
+            let limits = #"{"primary":{"used_percent":\#(pct),"window_minutes":10080,"resets_at":1793793564},"#
+                + #""secondary":null,"plan_type":"prolite"}"#
+            return #"{"timestamp":"\#(time)","type":"event_msg","payload":{"type":"token_count","rate_limits":\#(limits)}}"#
         }
-        dir.write("sessions/2026/11/01/rollout-old.jsonl", event("2026-11-01T10:00:00.000Z", 20), modified: Date(timeIntervalSinceNow: -86_400))
+        let yesterday = Date(timeIntervalSinceNow: -86_400)
+        dir.write("sessions/2026/11/01/rollout-old.jsonl", event("2026-11-01T10:00:00.000Z", 20), modified: yesterday)
         dir.write("sessions/2026/11/02/rollout-new.jsonl", [
             event("2026-11-02T19:00:00.000Z", 30),
             event("2026-11-02T19:38:07.977Z", 36),
