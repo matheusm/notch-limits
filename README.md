@@ -12,6 +12,8 @@
 
 # notch-limits
 
+**[Website](https://notch-limits.vercel.app)** · **[Download for macOS](https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg)** · [Releases](https://github.com/matheusm/notch-limits/releases)
+
 **A tiny native macOS app that shows your Claude Code and OpenAI Codex usage limits around the MacBook notch.** It covers the 5-hour session limit, the weekly limit and per-model limits, for as many accounts as you use.
 
 The notch area becomes a Dynamic Island-style pill with one progress ring per account. Hover over it and it expands to show every rate-limit window, its percentage and when it resets. On Macs without a notch it falls back to a menu bar item.
@@ -45,13 +47,24 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 
 ## Install
 
+**One line** (installs into `~/Applications`, no Gatekeeper prompt):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash
+```
+
+**Or download the app:** grab [`NotchLimits.dmg`](https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg) (or the [`.zip`](https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.zip)), open it and drag Notch Limits to Applications. The app is not notarized yet, so on first launch open **System Settings → Privacy & Security → Open Anyway**.
+
+Universal binary (Apple Silicon + Intel), about 1.7 MB.
+
+### Build from source
+
 ```bash
 git clone https://github.com/matheusm/notch-limits.git
 cd notch-limits
-./build.sh
+./build.sh          # build, install to ~/Applications and launch
+./build.sh --dist   # universal NotchLimits.dmg + .zip in dist/
 ```
-
-`build.sh` compiles a release build, wraps it in `~/Applications/NotchLimits.app` (ad-hoc signed, no Dock icon) and launches it. Run it again after pulling updates.
 
 ## Configuration
 
