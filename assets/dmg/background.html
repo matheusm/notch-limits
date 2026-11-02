@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Fundo da janela do DMG (660x400). Renderizado em 1x e 2x e combinado em background.tiff pelo build -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 660px; height: 400px; overflow: hidden; }
+  body {
+    font-family: "Geist", -apple-system, sans-serif; color: #f5f5f7; -webkit-font-smoothing: antialiased;
+    background: radial-gradient(520px 300px at 50% -60px, #1b1d22 0%, transparent 72%), #08090b;
+    position: relative;
+  }
+  .pill {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 236px; height: 30px; background: #000; border-radius: 0 0 12px 12px;
+    display: grid; grid-template-columns: 58px 1fr 58px; align-items: center;
+    box-shadow: 0 10px 24px -10px rgba(0,0,0,.9);
+  }
+  .ear { display: flex; justify-content: center; gap: 5px; }
+  .ring { width: 18px; height: 18px; display: block; overflow: visible; }
+  .ring .track { fill: none; stroke: rgba(255,255,255,.22); stroke-width: 3.2; }
+  .ring .fill { fill: none; stroke: #d1d1d1; stroke-width: 3.2; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+  .ring .glyph { fill: #fff; } .ring .glyph--stroke { fill: none; stroke: #fff; stroke-width: 1.7; }
+  .arrow { position: absolute; left: 268px; top: 178px; width: 124px; height: 24px; }
+  .copy { position: absolute; left: 0; right: 0; top: 318px; text-align: center; }
+  .copy b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: #e8e8ec; }
+  .copy span { display: block; margin-top: 6px; font-size: 12px; color: #7a7a82; }
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs></svg>
+<div class="pill">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100" stroke-dasharray="64 100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100" stroke-dasharray="27 100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100" stroke-dasharray="41 100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+<svg class="arrow" viewBox="0 0 124 24" fill="none" stroke="#5c5e66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 12h112" stroke-dasharray="2 7"/><path d="M106 4l10 8-10 8"/>
+</svg>
+<div class="copy"><b>Drag Notch Limits to Applications</b><span>Then open it once. It lives in your notch from then on.</span></div>
+</body></html>

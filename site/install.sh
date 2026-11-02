@@ -18,10 +18,11 @@ echo "→ Downloading Notch Limits…"
 curl -fsSL "$URL" -o "$TMP/NotchLimits.zip"
 
 mkdir -p "$DEST"
+APP="$DEST/Notch Limits.app"
 pkill -x NotchLimits 2>/dev/null || true
-rm -rf "$DEST/NotchLimits.app"
+rm -rf "$APP" "$DEST/NotchLimits.app"   # NotchLimits.app = nome usado até a v1.0.0
 ditto -x -k "$TMP/NotchLimits.zip" "$DEST"
-xattr -dr com.apple.quarantine "$DEST/NotchLimits.app" 2>/dev/null || true
+xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 
-open "$DEST/NotchLimits.app"
-echo "✓ Installed to $DEST/NotchLimits.app — look at your notch."
+open "$APP"
+echo "✓ Installed to $APP — look at your notch."

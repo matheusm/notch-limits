@@ -43,21 +43,22 @@ PLIST
 
 if [[ "$1" == "--dist" ]]; then
   swift build -c release --arch arm64 --arch x86_64
-  rm -rf dist && mkdir -p dist/dmg
-  make_bundle .build/apple/Products/Release/NotchLimits dist/NotchLimits.app
+  rm -rf dist && mkdir -p dist
+  make_bundle .build/apple/Products/Release/NotchLimits "dist/Notch Limits.app"
 
-  ditto -c -k --keepParent dist/NotchLimits.app dist/NotchLimits.zip
-  cp -R dist/NotchLimits.app dist/dmg/ && ln -s /Applications dist/dmg/Applications
-  hdiutil create -volname "Notch Limits" -srcfolder dist/dmg -ov -format UDZO dist/NotchLimits.dmg >/dev/null
-  rm -rf dist/dmg
+  ditto -c -k --keepParent "dist/Notch Limits.app" dist/NotchLimits.zip
+  # DMG com fundo, ícones posicionados e atalho para Applications (dmgbuild escreve o layout sem automatizar o Finder)
+  uvx dmgbuild -s assets/dmg/settings.py -D app="dist/Notch Limits.app" \
+    -D volicon="dist/Notch Limits.app/Contents/Resources/AppIcon.icns" "Notch Limits" dist/NotchLimits.dmg >/dev/null
   shasum -a 256 dist/NotchLimits.zip dist/NotchLimits.dmg
   echo "v$VERSION pronto em dist/"
   exit 0
 fi
 
 swift build -c release
-APP="$HOME/Applications/NotchLimits.app"
+APP="$HOME/Applications/Notch Limits.app"
 pkill -x NotchLimits 2>/dev/null || true
+rm -rf "$HOME/Applications/NotchLimits.app"   # nome antigo, antes do espaço
 make_bundle .build/release/NotchLimits "$APP"
 open "$APP"
 echo "Instalado em $APP"
