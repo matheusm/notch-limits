@@ -100,17 +100,13 @@ private struct NotchDetailView: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
-            if let t = store.usage.values.compactMap(\.updatedAt).max() {
-                Text("\(L("Updated", "Atualizado", "Actualizado")) \(t.formatted(date: .omitted, time: .shortened))")
-                    .font(.system(size: 10)).foregroundStyle(dim)
-            }
             Spacer()
             chip(L("Login", "Login", "Inicio"), on: launchAtLogin) {
                 launchAtLogin.toggle()
                 try? launchAtLogin ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
             }
             chip("Notch", on: showNotch) { showNotch.toggle() }
-            iconButton(store.loading ? "ellipsis" : "arrow.clockwise") { Task { await store.refresh() } }
+            iconButton(store.loading ? "ellipsis" : "arrow.clockwise") { Task { await store.refresh(force: true) } }
             iconButton("power") { NSApp.terminate(nil) }
         }
     }
@@ -165,7 +161,15 @@ private struct NotchAccountRow: View {
                     }
                 }
 
-                if let err = usage?.error {
+                if let at = usage?.updatedAt {
+                    TimelineView(.periodic(from: .now, by: 30)) { _ in
+                        Text(ageText(at)).font(.system(size: 10))
+                            .foregroundStyle(usage?.isStale == true ? .orange : dim)
+                    }
+                    .padding(.top, -4)
+                }
+
+                if let err = usage?.visibleError {
                     Label(err, systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 10)).foregroundStyle(.orange)
                 }
@@ -302,6 +306,6 @@ final class NotchController {
         panel.ignoresMouseEvents = !on
         insideSince = nil
         outsideSince = nil
-        if on { store.refreshIfStale() }
+        if on { Task { await store.refresh(network: false) } }   // abrir não faz requisição
     }
 }

@@ -1,5 +1,4 @@
 import SwiftUI
-import CryptoKit
 import ServiceManagement
 
 // MARK: - Contas
@@ -7,7 +6,7 @@ import ServiceManagement
 
 enum Provider {
     case claude(configDir: String)   // dir passado em CLAUDE_CONFIG_DIR (~/.claude = conta padrão)
-    case codex(authFile: String)
+    case codex(home: String)         // CODEX_HOME (~/.codex)
 }
 
 struct Account: Identifiable {
@@ -51,14 +50,12 @@ private func loadAccounts() -> [Account] {
         case "claude":
             return Account(id: "\(i)", name: c.name, glyph: glyph, provider: .claude(configDir: expand(c.path ?? "~/.claude")))
         case "codex":
-            return Account(id: "\(i)", name: c.name, glyph: glyph, provider: .codex(authFile: expand(c.path ?? "~/.codex") + "/auth.json"))
+            return Account(id: "\(i)", name: c.name, glyph: glyph, provider: .codex(home: expand(c.path ?? "~/.codex")))
         default:
             return nil
         }
     }
 }
-
-let refreshInterval: TimeInterval = 300
 
 // MARK: - Modelo
 
@@ -106,131 +103,27 @@ struct Usage {
     var updatedAt: Date?
 
     var peak: Double? { windows.map(\.percent).max() }
-}
 
-struct UsageError: LocalizedError {
-    let errorDescription: String?
-    var retryAfter: TimeInterval? = nil   // preenchido quando a API responde 429
-    init(_ msg: String, retryAfter: TimeInterval? = nil) {
-        errorDescription = msg
-        self.retryAfter = retryAfter
+    /// Dado com mais de 15 min fica destacado na UI
+    var isStale: Bool { updatedAt.map { Date().timeIntervalSince($0) > 900 } ?? true }
+
+    /// Mostra o erro só quando não há dado útil para exibir no lugar
+    var visibleError: String? { windows.isEmpty || isStale ? error : nil }
+
+    static func newest(_ a: Usage?, _ b: Usage?) -> Usage? {
+        let candidates = [a, b].compactMap { $0 }.filter { !$0.windows.isEmpty && $0.updatedAt != nil }
+        return candidates.max { $0.updatedAt! < $1.updatedAt! }
     }
 }
 
-// MARK: - Fetchers
-
-private func runSecurity(_ service: String) throws -> Data {
-    // Usa o binário `security`, que já está na ACL do item criado pelo Claude Code (sem prompt)
-    let p = Process()
-    p.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-    p.arguments = ["find-generic-password", "-s", service, "-w"]
-    let out = Pipe()
-    p.standardOutput = out
-    p.standardError = Pipe()
-    try p.run()
-    let data = out.fileHandleForReading.readDataToEndOfFile()
-    p.waitUntilExit()
-    guard p.terminationStatus == 0 else { throw UsageError(L("Credential not found in Keychain", "Credencial não encontrada no Keychain", "Credencial no encontrada en el Llavero")) }
-    return data
-}
-
-/// Mesmo esquema do Claude Code: dir padrão sem sufixo, demais com sha256(path)[0..<8]
-private func keychainService(for configDir: String) -> String {
-    if configDir == "\(home)/.claude" { return "Claude Code-credentials" }
-    let hash = SHA256.hash(data: Data(configDir.utf8)).map { String(format: "%02x", $0) }.joined()
-    return "Claude Code-credentials-\(hash.prefix(8))"
-}
-
-private func parseISO(_ s: String?) -> Date? {
-    guard let s else { return nil }
-    let f = ISO8601DateFormatter()
-    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    if let d = f.date(from: s) { return d }
-    f.formatOptions = [.withInternetDateTime]
-    return f.date(from: s)
-}
-
-private var tokenExpired: UsageError {
-    UsageError(L("Token expired — open the CLI to renew it", "Token expirado — abra o CLI para renovar", "Token expirado — abre la CLI para renovarlo"))
-}
-
-private func get(_ url: String, headers: [String: String]) async throws -> Any {
-    var req = URLRequest(url: URL(string: url)!, timeoutInterval: 20)
-    headers.forEach { req.setValue($1, forHTTPHeaderField: $0) }
-    let (data, resp) = try await URLSession.shared.data(for: req)
-    let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
-    switch status {
-    case 200: return try JSONSerialization.jsonObject(with: data)
-    case 401, 403: throw tokenExpired
-    case 429:
-        let wait = ((resp as? HTTPURLResponse)?.value(forHTTPHeaderField: "Retry-After")).flatMap(TimeInterval.init) ?? 300
-        let min = max(1, Int((wait / 60).rounded(.up)))
-        throw UsageError(L("API rate limited — retrying in \(min) min", "A API limitou as consultas — tenta de novo em \(min) min",
-                           "La API limitó las consultas — reintento en \(min) min"), retryAfter: wait)
-    default: throw UsageError("HTTP \(status)")
-    }
-}
-
-private func fetchClaude(configDir: String) async throws -> Usage {
-    let raw = try await Task.detached { try runSecurity(keychainService(for: configDir)) }.value
-    guard let creds = (try JSONSerialization.jsonObject(with: raw) as? [String: Any])?["claudeAiOauth"] as? [String: Any],
-          let token = creds["accessToken"] as? String
-    else { throw UsageError(L("Invalid credential", "Credencial inválida", "Credencial no válida")) }
-    if let exp = creds["expiresAt"] as? Double, exp / 1000 < Date().timeIntervalSince1970 {
-        throw tokenExpired
-    }
-
-    let json = try await get("https://api.anthropic.com/api/oauth/usage", headers: [
-        "Authorization": "Bearer \(token)",
-        "anthropic-beta": "oauth-2025-04-20",
-        "User-Agent": "claude-code/2.0",
-    ]) as? [String: Any] ?? [:]
-
-    var windows: [LimitWindow] = []
-    if let limits = json["limits"] as? [[String: Any]] {
-        for l in limits {
-            guard let pct = l["percent"] as? Double else { continue }
-            let model = ((l["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
-            let kind: WindowKind = switch l["kind"] as? String {
-            case "session": .session(hours: 5)
-            case "weekly_all": .weekly
-            default: .weeklyModel(model ?? L("other", "outro", "otro"))
-            }
-            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(l["resets_at"] as? String)))
-        }
-    } else {
-        for (key, kind) in [("five_hour", WindowKind.session(hours: 5)), ("seven_day", .weekly)] {
-            guard let w = json[key] as? [String: Any], let pct = w["utilization"] as? Double else { continue }
-            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(w["resets_at"] as? String)))
-        }
-    }
-
-    let plan = [creds["subscriptionType"] as? String,
-                (creds["rateLimitTier"] as? String).flatMap { $0.split(separator: "_").last.map(String.init) }]
-        .compactMap { $0 }.joined(separator: " ")
-    return Usage(windows: windows, plan: plan, updatedAt: Date())
-}
-
-private func fetchCodex(authFile: String) async throws -> Usage {
-    guard let data = FileManager.default.contents(atPath: authFile),
-          let tokens = (try JSONSerialization.jsonObject(with: data) as? [String: Any])?["tokens"] as? [String: Any],
-          let token = tokens["access_token"] as? String
-    else { throw UsageError(L("auth.json not found — log in to Codex", "auth.json não encontrado — faça login no Codex", "auth.json no encontrado — inicia sesión en Codex")) }
-
-    var headers = ["Authorization": "Bearer \(token)", "User-Agent": "codex_cli_rs"]
-    if let acc = tokens["account_id"] as? String { headers["ChatGPT-Account-Id"] = acc }
-    let json = try await get("https://chatgpt.com/backend-api/wham/usage", headers: headers) as? [String: Any] ?? [:]
-
-    var windows: [LimitWindow] = []
-    let rl = json["rate_limit"] as? [String: Any] ?? [:]
-    for key in ["primary_window", "secondary_window"] {
-        guard let w = rl[key] as? [String: Any], let pct = w["used_percent"] as? Double else { continue }
-        let secs = w["limit_window_seconds"] as? Int ?? 0
-        let kind: WindowKind = secs >= 604_800 ? .weekly : secs >= 86_400 ? .days(secs / 86_400) : .session(hours: secs / 3600)
-        let reset = (w["reset_at"] as? Double).map { Date(timeIntervalSince1970: $0) }
-        windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: reset))
-    }
-    return Usage(windows: windows, plan: json["plan_type"] as? String, updatedAt: Date())
+/// "atualizado há 3 min" no idioma da interface
+func ageText(_ date: Date?) -> String {
+    guard let date else { return "" }
+    if Date().timeIntervalSince(date) < 60 { return L("updated just now", "atualizado agora", "actualizado ahora") }
+    let f = RelativeDateTimeFormatter()
+    f.locale = uiLocale
+    f.unitsStyle = .short
+    return "\(L("updated", "atualizado", "actualizado")) \(f.localizedString(for: date, relativeTo: Date()))"
 }
 
 // MARK: - Store
@@ -241,54 +134,54 @@ final class Store: ObservableObject {
 
     @Published var usage: [String: Usage] = [:]
     @Published var loading = false
-    private var lastRefresh = Date.distantPast
     private var blockedUntil: [String: Date] = [:]   // backoff por conta após 429
 
     init() {
+        // a cada minuto relê os arquivos locais; a API só é chamada quando o dado local passa de 10 min
         Task {
             while true {
                 await refresh()
-                try? await Task.sleep(for: .seconds(refreshInterval))
+                try? await Task.sleep(for: .seconds(60))
             }
         }
     }
 
-    func refreshIfStale() {
-        // o endpoint de uso tem limite de consultas apertado; hover só atualiza se os dados tiverem 2+ min
-        if Date().timeIntervalSince(lastRefresh) > 120 { Task { await refresh() } }
-    }
-
-    func refresh() async {
+    /// network: false só relê os arquivos locais (usado ao abrir o notch/menu, sem nenhuma requisição)
+    /// force: consulta a API mesmo com dado fresco (botão de atualizar), respeitando o backoff
+    func refresh(network: Bool = true, force: Bool = false) async {
         guard !loading else { return }
         loading = true
-        lastRefresh = Date()
-        await withTaskGroup(of: (String, Result<Usage, Error>).self) { group in
-            for acc in accounts where (blockedUntil[acc.id] ?? .distantPast) <= Date() {
+        let now = Date()
+        let current = usage
+        let blocked = blockedUntil
+
+        await withTaskGroup(of: (id: String, usage: Usage?, error: Error?, calledAPI: Bool).self) { group in
+            for acc in accounts {
+                let previous = current[acc.id]
+                let canCall = network && (blocked[acc.id] ?? .distantPast) <= now
                 group.addTask {
+                    let best = Usage.newest(previous, localUsage(acc))
+                    let fresh = best?.updatedAt.map { now.timeIntervalSince($0) < staleAfter } ?? false
+                    guard canCall, force || !fresh else { return (acc.id, best, nil, false) }
                     do {
-                        switch acc.provider {
-                        case .claude(let dir): return (acc.id, .success(try await fetchClaude(configDir: dir)))
-                        case .codex(let file): return (acc.id, .success(try await fetchCodex(authFile: file)))
-                        }
-                    } catch { return (acc.id, .failure(error)) }
+                        return (acc.id, try await remoteUsage(acc), nil, true)
+                    } catch {
+                        return (acc.id, best, error, true)
+                    }
                 }
             }
-            for await (id, result) in group {
-                switch result {
-                case .success(let u):
-                    usage[id] = u
-                    blockedUntil[id] = nil
-                case .failure(let e):
-                    // mantém o último valor bom; em 429 espera o Retry-After e só mostra erro se não houver dado nenhum
-                    var u = usage[id] ?? Usage()
-                    if let wait = (e as? UsageError)?.retryAfter {
-                        blockedUntil[id] = Date().addingTimeInterval(wait)
-                        u.error = u.windows.isEmpty ? e.localizedDescription : nil
-                    } else {
-                        u.error = e.localizedDescription
+            for await r in group {
+                var u = r.usage ?? Usage()
+                if u.plan == nil { u.plan = current[r.id]?.plan }
+                if r.calledAPI {
+                    u.error = r.error?.localizedDescription
+                    if let wait = (r.error as? UsageError)?.retryAfter {
+                        blockedUntil[r.id] = Date().addingTimeInterval(wait)
                     }
-                    usage[id] = u
+                } else {
+                    u.error = current[r.id]?.error   // sem nova tentativa, mantém o último erro conhecido
                 }
+                usage[r.id] = u
             }
         }
         loading = false
@@ -344,7 +237,12 @@ struct AccountView: View {
                 }
                 Spacer()
             }
-            if let err = usage?.error {
+            if let at = usage?.updatedAt {
+                TimelineView(.periodic(from: .now, by: 30)) { _ in
+                    Text(ageText(at)).font(.caption2).foregroundStyle(usage?.isStale == true ? .orange : .secondary)
+                }
+            }
+            if let err = usage?.visibleError {
                 Label(err, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
             }
             if let windows = usage?.windows, !windows.isEmpty {
@@ -380,13 +278,9 @@ struct ContentView: View {
             }
             Divider()
             HStack {
-                if let t = store.usage.values.compactMap(\.updatedAt).max() {
-                    Text("\(L("Updated", "Atualizado", "Actualizado")) \(t.formatted(date: .omitted, time: .shortened))")
-                        .font(.caption2).foregroundStyle(.secondary)
-                }
                 Spacer()
                 Button {
-                    Task { await store.refresh() }
+                    Task { await store.refresh(force: true) }
                 } label: {
                     if store.loading { ProgressView().controlSize(.mini) } else { Image(systemName: "arrow.clockwise") }
                 }
@@ -407,7 +301,7 @@ struct ContentView: View {
         }
         .padding(14)
         .frame(width: 290)
-        .onAppear { store.refreshIfStale() }
+        .onAppear { Task { await store.refresh(network: false) } }
     }
 }
 

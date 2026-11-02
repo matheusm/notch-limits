@@ -32,7 +32,8 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Multiple accounts:** any number of Claude Code config dirs plus Codex homes.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
-- **Small and dependency-free:** pure Swift + SwiftUI. It refreshes every 5 minutes and on hover.
+- **Local-first:** it reads the usage snapshots Claude Code and Codex already write to disk and only calls the API when they are more than 10 minutes old.
+- **Small and dependency-free:** pure Swift + SwiftUI.
 - **Launch at login** toggle built in.
 - **English, Português and Español:** the UI follows your macOS language order and falls back to English.
 
@@ -100,10 +101,17 @@ Each ring shows the **highest** usage among that account's windows, since that i
 
 ## How it works
 
-| Provider | Credentials (read-only) | Endpoint |
-| --- | --- | --- |
-| Claude Code | macOS Keychain item `Claude Code-credentials` (or `Claude Code-credentials-<sha256(config dir)[:8]>` for custom `CLAUDE_CONFIG_DIR`) | `GET https://api.anthropic.com/api/oauth/usage` |
-| Codex | `$CODEX_HOME/auth.json` | `GET https://chatgpt.com/backend-api/wham/usage` |
+notch-limits is **local-first**: it reads the usage snapshot your CLIs already keep on disk, and only calls the usage API when that snapshot is more than 10 minutes old.
+
+| Provider | Local snapshot (no network) | API fallback | Credentials (read-only) |
+| --- | --- | --- | --- |
+| Claude Code | `cachedUsageUtilization` in `~/.claude.json` (or `$CLAUDE_CONFIG_DIR/.claude.json`), written by Claude Code itself | `GET https://api.anthropic.com/api/oauth/usage` | Keychain item `Claude Code-credentials` (or `Claude Code-credentials-<sha256(config dir)[:8]>` for a custom `CLAUDE_CONFIG_DIR`) |
+| Codex | Latest `rate_limits` event in `$CODEX_HOME/sessions/**/*.jsonl`, written on every Codex response | `GET https://chatgpt.com/backend-api/wham/usage` | `$CODEX_HOME/auth.json` |
+
+- Local files are re-read every minute and whenever you open the notch or the menu. **Opening the panel never makes a network request.**
+- The API is only called when the newest data is more than 10 minutes old, or when you press ↻. When Claude Code or Codex are in use, their own snapshots keep the app up to date with zero extra requests.
+- Each account shows how old its data is ("updated 3 min ago"). The age turns orange after 15 minutes.
+- If the API answers `429`, the app waits for the `Retry-After` delay and keeps showing the last snapshot in the meantime.
 
 These are the same endpoints that Claude Code's `/usage` and Codex's `/status` use. The Keychain is read through `/usr/bin/security`, which is already on the item's access list, so there is no permission prompt.
 
