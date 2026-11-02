@@ -224,6 +224,12 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
             ? tr("in \(left)", "em \(left)", "en \(left)")
             : tr("resets in \(left)", "reseta em \(left)", "se reinicia en \(left)")
     }
+    let when = dayTimeText(date)
+    return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
+}
+
+/// "hoje 16:20", "amanhã 09:00", "ter 14:00" (12h/24h conforme o idioma); usado no reset e no ritmo (R-08)
+func dayTimeText(_ date: Date) -> String {
     // arredonda pro minuto mais próximo (a API manda 00:59:59.9 para resets "às 01:00")
     let rounded = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)
     let calendar = Calendar.current
@@ -233,8 +239,7 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
     let day = calendar.isDateInToday(rounded) ? tr("today", "hoje", "hoy")
         : calendar.isDateInTomorrow(rounded) ? tr("tomorrow", "amanhã", "mañana") : formatter.string(from: rounded)
     formatter.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
-    let when = "\(day) \(formatter.string(from: rounded))"
-    return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
+    return "\(day) \(formatter.string(from: rounded))"
 }
 
 struct AccountView: View {
@@ -265,8 +270,9 @@ struct AccountView: View {
             if let err = usage?.visibleError {
                 Label(err, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
             }
-            if let windows = usage?.windows, !windows.isEmpty {
-                ForEach(windows) { limit in
+            if let usage, !usage.windows.isEmpty {
+                let now = Date()
+                ForEach(usage.windows) { limit in
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
                             Text(limit.label).font(.caption)
@@ -276,6 +282,10 @@ struct AccountView: View {
                         }
                         ProgressView(value: min(limit.percent, 100), total: 100).tint(alertColor(for: limit.percent) ?? .gray)
                         Text(resetText(limit.resetsAt, countdown: limit.isSession)).font(.caption2).foregroundStyle(.secondary)
+                        // ritmo (R-08): só a linha, na cor que a janela já tem; a barra do sistema fica sem traço
+                        if let limitAt = pace(of: limit, in: usage, now: now)?.limitAt {
+                            Text(paceText(limitAt)).font(.caption2).foregroundStyle(alertColor(for: limit.percent) ?? .secondary)
+                        }
                     }
                 }
             } else if usage == nil {

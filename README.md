@@ -33,6 +33,7 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Codex limits:** primary and secondary rate-limit windows for ChatGPT plans (Plus, Pro, Team…).
 - **Multiple accounts:** any number of Claude Code config dirs plus Codex homes, found automatically in `~/.claude*` and `~/.codex*` and managed in a Settings window.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
+- **Pace projection:** each bar in the notch panel has a subtle tick where usage would be if spread evenly over the window, and "At this pace: limit today 16:20" appears under any window you are on track to hit before it resets. It is a linear projection from the current snapshot, with no stored history, and only shows once 15% of the window has passed.
 - **Best account now:** with two or more accounts of the same provider, the expanded panel tags the one with the most headroom "Best now".
 - **Optional notifications:** a heads-up when a limit reaches 90%, and another when a limit you hit resets ("Claude Work is available again"). Off by default; turn them on in Settings.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.

@@ -10,8 +10,9 @@ private let windowHeight: CGFloat = 720
 private func leftAccounts(_ list: [Account]) -> ArraySlice<Account> { list.prefix((list.count + 1) / 2) }
 private func rightAccounts(_ list: [Account]) -> ArraySlice<Account> { list.dropFirst((list.count + 1) / 2) }
 
-private let ringGray = Color(white: 0.82)
-private let dim = Color.white.opacity(0.45)
+// tons neutros do painel, compartilhados com NotchRow.swift
+let ringGray = Color(white: 0.82)
+let dim = Color.white.opacity(0.45)
 
 /// Estado compartilhado com a cena da barra (para esconder o ícone quando o notch está ativo)
 @MainActor
@@ -147,98 +148,6 @@ private struct NotchDetailView: View {
         .buttonStyle(.plain)
         .foregroundStyle(.white.opacity(0.8))
         .help(label)
-    }
-}
-
-private struct NotchAccountRow: View {
-    let account: Account
-    let usage: Usage?
-    let isBest: Bool
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            RingIcon(
-                percent: usage?.peak,
-                glyph: account.glyph,
-                tint: .white,
-                progressTint: usage?.peak.flatMap(alertColor(for:)) ?? ringGray,
-                size: 34
-            )
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(account.name).font(.system(size: 13, weight: .semibold))
-                    if let plan = usage?.plan, !plan.isEmpty {
-                        Text(plan.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
-                            .foregroundStyle(dim)
-                    }
-                    if isBest {
-                        // estado, não plano: visual do chip selecionado, sem cor nova (cor só para alerta, D-016)
-                        Text(bestNowLabel.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.white.opacity(0.14), in: Capsule())
-                            .help(bestNowHelp(account.provider))
-                    }
-                    Spacer()
-                    if let peak = usage?.peak {
-                        Text("\(Int(peak.rounded()))%")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded).monospacedDigit())
-                            .foregroundStyle(alertColor(for: peak) ?? .white)
-                    }
-                }
-
-                if let at = usage?.updatedAt {
-                    TimelineView(.periodic(from: .now, by: 30)) { _ in
-                        Text(ageText(at)).font(.system(size: 10))
-                            .foregroundStyle(usage?.isStale == true ? .orange : dim)
-                    }
-                    .padding(.top, -4)
-                }
-
-                if let err = usage?.visibleError {
-                    Label(err, systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 10)).foregroundStyle(.orange)
-                }
-
-                if let windows = usage?.windows, !windows.isEmpty {
-                    // colunas de largura fixa para as barras alinharem entre contas
-                    VStack(spacing: 7) {
-                        ForEach(windows) { limit in
-                            HStack(spacing: 10) {
-                                Text(limit.shortLabel).font(.system(size: 11)).foregroundStyle(dim)
-                                    .frame(width: 46, alignment: .leading)
-                                UsageBar(percent: limit.percent)
-                                Text("\(Int(limit.percent.rounded()))%")
-                                    .font(.system(size: 11, weight: .medium).monospacedDigit())
-                                    .frame(width: 32, alignment: .trailing)
-                                Text(resetText(limit.resetsAt, short: true, countdown: limit.isSession))
-                                    .font(.system(size: 10).monospacedDigit()).foregroundStyle(dim)
-                                    .frame(width: 96, alignment: .trailing)
-                            }
-                        }
-                    }
-                } else if usage == nil {
-                    ProgressView().controlSize(.small)
-                }
-            }
-        }
-    }
-}
-
-private struct UsageBar: View {
-    let percent: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.1))
-                Capsule().fill(alertColor(for: percent) ?? ringGray)
-                    .frame(width: max(geo.size.width * min(percent, 100) / 100, percent > 0 ? 4 : 0))
-            }
-        }
-        .frame(height: 4)
-        .frame(minWidth: 80, maxWidth: .infinity)
     }
 }
 
