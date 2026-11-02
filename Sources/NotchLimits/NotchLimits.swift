@@ -62,11 +62,41 @@ let refreshInterval: TimeInterval = 300
 
 // MARK: - Modelo
 
+enum WindowKind: Hashable {
+    case session(hours: Int)
+    case weekly
+    case weeklyModel(String)
+    case days(Int)
+}
+
 struct LimitWindow: Identifiable {
-    var id: String { label }
-    let label: String
+    var id: WindowKind { kind }
+    let kind: WindowKind
     let percent: Double
     let resetsAt: Date?
+
+    var label: String {
+        switch kind {
+        case .session(let h): L("\(h)h session", "Sessão \(h)h", "Sesión \(h)h")
+        case .weekly: L("Weekly", "Semana", "Semanal")
+        case .weeklyModel(let model): "\(L("Weekly", "Semana", "Semanal")) · \(model)"
+        case .days(let d): "\(d)d"
+        }
+    }
+
+    /// Versão compacta usada no notch
+    var shortLabel: String {
+        switch kind {
+        case .session(let h): "\(h)h"
+        case .weeklyModel(let model): model
+        default: label
+        }
+    }
+
+    /// Sessão mostra contagem regressiva; as demais mostram dia e hora do reset
+    var isSession: Bool {
+        if case .session = kind { true } else { false }
+    }
 }
 
 struct Usage {
@@ -96,7 +126,7 @@ private func runSecurity(_ service: String) throws -> Data {
     try p.run()
     let data = out.fileHandleForReading.readDataToEndOfFile()
     p.waitUntilExit()
-    guard p.terminationStatus == 0 else { throw UsageError("Credencial não encontrada no Keychain") }
+    guard p.terminationStatus == 0 else { throw UsageError(L("Credential not found in Keychain", "Credencial não encontrada no Keychain", "Credencial no encontrada en el Llavero")) }
     return data
 }
 
@@ -116,6 +146,10 @@ private func parseISO(_ s: String?) -> Date? {
     return f.date(from: s)
 }
 
+private var tokenExpired: UsageError {
+    UsageError(L("Token expired — open the CLI to renew it", "Token expirado — abra o CLI para renovar", "Token expirado — abre la CLI para renovarlo"))
+}
+
 private func get(_ url: String, headers: [String: String]) async throws -> Any {
     var req = URLRequest(url: URL(string: url)!, timeoutInterval: 20)
     headers.forEach { req.setValue($1, forHTTPHeaderField: $0) }
@@ -123,8 +157,8 @@ private func get(_ url: String, headers: [String: String]) async throws -> Any {
     let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
     switch status {
     case 200: return try JSONSerialization.jsonObject(with: data)
-    case 401, 403: throw UsageError("Token expirado — abra o CLI para renovar")
-    case 429: throw UsageError("Rate limit da API, tenta de novo já já")
+    case 401, 403: throw tokenExpired
+    case 429: throw UsageError(L("API rate limited, retrying soon", "Rate limit da API, tenta de novo já já", "Límite de la API, se reintentará pronto"))
     default: throw UsageError("HTTP \(status)")
     }
 }
@@ -133,9 +167,9 @@ private func fetchClaude(configDir: String) async throws -> Usage {
     let raw = try await Task.detached { try runSecurity(keychainService(for: configDir)) }.value
     guard let creds = (try JSONSerialization.jsonObject(with: raw) as? [String: Any])?["claudeAiOauth"] as? [String: Any],
           let token = creds["accessToken"] as? String
-    else { throw UsageError("Credencial inválida") }
+    else { throw UsageError(L("Invalid credential", "Credencial inválida", "Credencial no válida")) }
     if let exp = creds["expiresAt"] as? Double, exp / 1000 < Date().timeIntervalSince1970 {
-        throw UsageError("Token expirado — abra o CLI para renovar")
+        throw tokenExpired
     }
 
     let json = try await get("https://api.anthropic.com/api/oauth/usage", headers: [
@@ -149,18 +183,17 @@ private func fetchClaude(configDir: String) async throws -> Usage {
         for l in limits {
             guard let pct = l["percent"] as? Double else { continue }
             let model = ((l["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
-            let label: String
-            switch l["kind"] as? String {
-            case "session": label = "Sessão 5h"
-            case "weekly_all": label = "Semana"
-            default: label = "Semana · \(model ?? "outro")"
+            let kind: WindowKind = switch l["kind"] as? String {
+            case "session": .session(hours: 5)
+            case "weekly_all": .weekly
+            default: .weeklyModel(model ?? L("other", "outro", "otro"))
             }
-            windows.append(LimitWindow(label: label, percent: pct, resetsAt: parseISO(l["resets_at"] as? String)))
+            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(l["resets_at"] as? String)))
         }
     } else {
-        for (key, label) in [("five_hour", "Sessão 5h"), ("seven_day", "Semana")] {
+        for (key, kind) in [("five_hour", WindowKind.session(hours: 5)), ("seven_day", .weekly)] {
             guard let w = json[key] as? [String: Any], let pct = w["utilization"] as? Double else { continue }
-            windows.append(LimitWindow(label: label, percent: pct, resetsAt: parseISO(w["resets_at"] as? String)))
+            windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: parseISO(w["resets_at"] as? String)))
         }
     }
 
@@ -174,7 +207,7 @@ private func fetchCodex(authFile: String) async throws -> Usage {
     guard let data = FileManager.default.contents(atPath: authFile),
           let tokens = (try JSONSerialization.jsonObject(with: data) as? [String: Any])?["tokens"] as? [String: Any],
           let token = tokens["access_token"] as? String
-    else { throw UsageError("auth.json não encontrado — faça login no codex") }
+    else { throw UsageError(L("auth.json not found — log in to Codex", "auth.json não encontrado — faça login no Codex", "auth.json no encontrado — inicia sesión en Codex")) }
 
     var headers = ["Authorization": "Bearer \(token)", "User-Agent": "codex_cli_rs"]
     if let acc = tokens["account_id"] as? String { headers["ChatGPT-Account-Id"] = acc }
@@ -185,9 +218,9 @@ private func fetchCodex(authFile: String) async throws -> Usage {
     for key in ["primary_window", "secondary_window"] {
         guard let w = rl[key] as? [String: Any], let pct = w["used_percent"] as? Double else { continue }
         let secs = w["limit_window_seconds"] as? Int ?? 0
-        let label = secs >= 604_800 ? "Semana" : secs >= 86_400 ? "\(secs / 86_400)d" : "Sessão \(secs / 3600)h"
+        let kind: WindowKind = secs >= 604_800 ? .weekly : secs >= 86_400 ? .days(secs / 86_400) : .session(hours: secs / 3600)
         let reset = (w["reset_at"] as? Double).map { Date(timeIntervalSince1970: $0) }
-        windows.append(LimitWindow(label: label, percent: pct, resetsAt: reset))
+        windows.append(LimitWindow(kind: kind, percent: pct, resetsAt: reset))
     }
     return Usage(windows: windows, plan: json["plan_type"] as? String, updatedAt: Date())
 }
@@ -261,24 +294,23 @@ func alertColor(for pct: Double) -> Color? {
 func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> String {
     guard let date else { return "" }
     let secs = date.timeIntervalSinceNow
-    if secs <= 0 { return "resetou" }
+    if secs <= 0 { return L("reset", "resetou", "reiniciado") }
     if countdown {
         let h = Int(secs) / 3600, m = Int(secs) % 3600 / 60
         let t = h > 0 ? "\(h)h\(String(format: "%02d", m))" : "\(m)min"
-        return short ? "em \(t)" : "reseta em \(t)"
+        return short ? L("in \(t)", "em \(t)", "en \(t)") : L("resets in \(t)", "reseta em \(t)", "se reinicia en \(t)")
     }
     // arredonda pro minuto mais próximo (a API manda 00:59:59.9 para resets "às 01:00")
     let d = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)
-    let f = DateFormatter()
-    f.locale = Locale(identifier: "pt_BR")
-    f.dateFormat = "HH:mm"
     let cal = Calendar.current
-    let day: String
-    if cal.isDateInToday(d) { day = "hoje" }
-    else if cal.isDateInTomorrow(d) { day = "amanhã" }
-    else { f.dateFormat = "EEE HH:mm"; day = "" }
-    let t = day.isEmpty ? f.string(from: d) : "\(day) \(f.string(from: d))"
-    return short ? t : "reseta \(t)"
+    let f = DateFormatter()
+    f.locale = uiLocale
+    f.dateFormat = "EEE"
+    let day = cal.isDateInToday(d) ? L("today", "hoje", "hoy")
+        : cal.isDateInTomorrow(d) ? L("tomorrow", "amanhã", "mañana") : f.string(from: d)
+    f.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
+    let t = "\(day) \(f.string(from: d))"
+    return short ? t : L("resets \(t)", "reseta \(t)", "se reinicia \(t)")
 }
 
 struct AccountView: View {
@@ -308,7 +340,7 @@ struct AccountView: View {
                                 .foregroundStyle(alertColor(for: w.percent) ?? .primary)
                         }
                         ProgressView(value: min(w.percent, 100), total: 100).tint(alertColor(for: w.percent) ?? .gray)
-                        Text(resetText(w.resetsAt, countdown: w.label.hasPrefix("Sessão"))).font(.caption2).foregroundStyle(.secondary)
+                        Text(resetText(w.resetsAt, countdown: w.isSession)).font(.caption2).foregroundStyle(.secondary)
                     }
                 }
             } else if usage == nil {
@@ -332,7 +364,7 @@ struct ContentView: View {
             Divider()
             HStack {
                 if let t = store.usage.values.compactMap(\.updatedAt).max() {
-                    Text("Atualizado \(t.formatted(date: .omitted, time: .shortened))")
+                    Text("\(L("Updated", "Atualizado", "Actualizado")) \(t.formatted(date: .omitted, time: .shortened))")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -342,10 +374,10 @@ struct ContentView: View {
                     if store.loading { ProgressView().controlSize(.mini) } else { Image(systemName: "arrow.clockwise") }
                 }
                 .buttonStyle(.borderless)
-                .help("Atualizar")
+                .help(L("Refresh", "Atualizar", "Actualizar"))
             }
             HStack {
-                Toggle("Abrir no login", isOn: $launchAtLogin)
+                Toggle(L("Launch at login", "Abrir no login", "Abrir al iniciar sesión"), isOn: $launchAtLogin)
                     .toggleStyle(.checkbox).font(.caption)
                     .onChange(of: launchAtLogin) { _, on in
                         try? on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
@@ -353,7 +385,7 @@ struct ContentView: View {
                 Toggle("Notch", isOn: $showNotch)
                     .toggleStyle(.checkbox).font(.caption)
                 Spacer()
-                Button("Sair") { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
+                Button(L("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
             }
         }
         .padding(14)

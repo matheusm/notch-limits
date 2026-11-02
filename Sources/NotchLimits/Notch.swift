@@ -101,11 +101,11 @@ private struct NotchDetailView: View {
     private var footer: some View {
         HStack(spacing: 6) {
             if let t = store.usage.values.compactMap(\.updatedAt).max() {
-                Text("Atualizado \(t.formatted(date: .omitted, time: .shortened))")
+                Text("\(L("Updated", "Atualizado", "Actualizado")) \(t.formatted(date: .omitted, time: .shortened))")
                     .font(.system(size: 10)).foregroundStyle(dim)
             }
             Spacer()
-            chip("Login", on: launchAtLogin) {
+            chip(L("Login", "Login", "Inicio"), on: launchAtLogin) {
                 launchAtLogin.toggle()
                 try? launchAtLogin ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
             }
@@ -175,15 +175,15 @@ private struct NotchAccountRow: View {
                     VStack(spacing: 7) {
                         ForEach(windows) { w in
                             HStack(spacing: 10) {
-                                Text(shortLabel(w.label)).font(.system(size: 11)).foregroundStyle(dim)
+                                Text(w.shortLabel).font(.system(size: 11)).foregroundStyle(dim)
                                     .frame(width: 46, alignment: .leading)
                                 UsageBar(percent: w.percent)
                                 Text("\(Int(w.percent.rounded()))%")
                                     .font(.system(size: 11, weight: .medium).monospacedDigit())
                                     .frame(width: 32, alignment: .trailing)
-                                Text(resetText(w.resetsAt, short: true, countdown: w.label.hasPrefix("Sessão")))
+                                Text(resetText(w.resetsAt, short: true, countdown: w.isSession))
                                     .font(.system(size: 10).monospacedDigit()).foregroundStyle(dim)
-                                    .frame(width: 72, alignment: .trailing)
+                                    .frame(width: 96, alignment: .trailing)
                             }
                         }
                     }
@@ -192,10 +192,6 @@ private struct NotchAccountRow: View {
                 }
             }
         }
-    }
-
-    private func shortLabel(_ label: String) -> String {
-        label.replacingOccurrences(of: "Sessão ", with: "").replacingOccurrences(of: "Semana · ", with: "")
     }
 }
 

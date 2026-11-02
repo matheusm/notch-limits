@@ -34,6 +34,7 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
 - **Small and dependency-free:** pure Swift + SwiftUI. It refreshes every 5 minutes and on hover.
 - **Launch at login** toggle built in.
+- **English, Português and Español:** the UI follows your macOS language order and falls back to English.
 
 ## Requirements
 
@@ -108,13 +109,13 @@ These are the same endpoints that Claude Code's `/usage` and Codex's `/status` u
 
 ## Troubleshooting
 
-- **"Token expirado — abra o CLI para renovar"** (token expired, open the CLI to renew it): access tokens are short-lived, and notch-limits never refreshes them on purpose, to avoid racing your CLI. Run `claude` (or `claude-work`, `codex`…) once and the account comes back on the next refresh.
-- **"Rate limit da API"** (API rate limit): the usage endpoint was polled too often. The next 5-minute refresh will recover it.
+- **"Token expired — open the CLI to renew it":** access tokens are short-lived, and notch-limits never refreshes them on purpose, to avoid racing your CLI. Run `claude` (or `claude-work`, `codex`…) once and the account comes back on the next refresh.
+- **"API rate limited":** the usage endpoint was polled too often. The next 5-minute refresh will recover it.
 - **Nothing next to the notch:** check that the built-in display is active. In clamshell mode the app automatically switches to the menu bar.
 
 ## Notes
 
-- The UI is currently in Brazilian Portuguese (pt-BR). PRs adding localization are welcome.
+- The UI is available in English, Portuguese and Spanish (System Settings → General → Language & Region). PRs adding more languages are welcome; all strings live in `L(en, pt, es)` calls (see `Sources/NotchLimits/L10n.swift`).
 - The endpoints above are undocumented and may change without notice.
 - This is an unofficial community project. It is not affiliated with or endorsed by Anthropic or OpenAI. "Claude" and "Codex" are trademarks of their respective owners.
 
