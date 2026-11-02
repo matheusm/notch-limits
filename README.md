@@ -33,6 +33,7 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 - **Codex limits:** primary and secondary rate-limit windows for ChatGPT plans (Plus, Pro, Team…).
 - **Multiple accounts:** any number of Claude Code config dirs plus Codex homes, found automatically in `~/.claude*` and `~/.codex*` and managed in a Settings window.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
+- **Best account now:** with two or more accounts of the same provider, the expanded panel tags the one with the most headroom "Best now".
 - **Optional notifications:** a heads-up when a limit reaches 90%, and another when a limit you hit resets ("Claude Work is available again"). Off by default; turn them on in Settings.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
 - **Local-first:** it reads the usage snapshots Claude Code and Codex already write to disk and only calls the API when they are more than 10 minutes old.
@@ -158,6 +159,8 @@ Log in once with `claude-work`. The `~/.claude-work` folder is found automatical
 | ↻ / ⏻ | Refresh now / quit |
 
 Each ring shows the **highest** usage among that account's windows, since that is the limit you will hit first.
+
+In the expanded panel (and the menu bar panel), when a provider has two or more accounts with fresh data, the one with the lowest of those numbers gets a neutral **Best now** tag: it has the most headroom right now. Claude and Codex accounts are ranked separately. There is no tag when the lowest values tie, when every account is at 100%, or when fewer than two accounts of that provider have data less than 15 minutes old. The collapsed rings do not change.
 
 ## How it works
 

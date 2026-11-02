@@ -36,6 +36,7 @@ func window(_ kind: WindowKind, _ percent: Double = 10, resetsAt: Date? = nil) -
     LimitWindow(kind: kind, percent: percent, resetsAt: resetsAt)
 }
 
-func usage(minutesAgo: Double, percent: Double = 10) -> Usage {
-    Usage(windows: [window(.weekly, percent)], updatedAt: Date().addingTimeInterval(-minutesAgo * 60))
+/// Uso com uma janela semanal lido há `minutesAgo` minutos; `now` fixo para os testes com relógio injetado
+func usage(minutesAgo: Double, percent: Double = 10, now: Date = Date()) -> Usage {
+    Usage(windows: [window(.weekly, percent)], updatedAt: now.addingTimeInterval(-minutesAgo * 60))
 }

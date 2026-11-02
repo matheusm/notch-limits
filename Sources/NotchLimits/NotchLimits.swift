@@ -240,6 +240,7 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
 struct AccountView: View {
     let account: Account
     let usage: Usage?
+    let isBest: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -248,6 +249,11 @@ struct AccountView: View {
                 if let plan = usage?.plan, !plan.isEmpty {
                     Text(plan).font(.caption2).padding(.horizontal, 5).padding(.vertical, 1)
                         .background(.quaternary, in: Capsule())
+                }
+                if isBest {
+                    Text(bestNowLabel).font(.caption2.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
+                        .background(.quaternary, in: Capsule())
+                        .help(bestNowHelp(account.provider))
                 }
                 Spacer()
             }
@@ -285,9 +291,10 @@ struct ContentView: View {
     @AppStorage("showNotch") private var showNotch = true
 
     var body: some View {
+        let best = bestAccountIDs(accounts: store.accounts, usage: store.usage, now: Date())
         VStack(alignment: .leading, spacing: 12) {
             ForEach(store.accounts) { acc in
-                AccountView(account: acc, usage: store.usage[acc.id])
+                AccountView(account: acc, usage: store.usage[acc.id], isBest: best.contains(acc.id))
                 if acc.id != store.accounts.last?.id { Divider() }
             }
             Divider()

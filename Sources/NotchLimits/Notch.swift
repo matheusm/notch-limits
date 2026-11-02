@@ -86,9 +86,10 @@ private struct NotchDetailView: View {
     @AppStorage("showNotch") private var showNotch = true
 
     var body: some View {
+        let best = bestAccountIDs(accounts: store.accounts, usage: store.usage, now: Date())
         VStack(alignment: .leading, spacing: 0) {
             ForEach(store.accounts) { acc in
-                NotchAccountRow(account: acc, usage: store.usage[acc.id])
+                NotchAccountRow(account: acc, usage: store.usage[acc.id], isBest: best.contains(acc.id))
                     .padding(.vertical, 12)
                 if acc.id != store.accounts.last?.id {
                     Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
@@ -152,6 +153,7 @@ private struct NotchDetailView: View {
 private struct NotchAccountRow: View {
     let account: Account
     let usage: Usage?
+    let isBest: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -169,6 +171,14 @@ private struct NotchAccountRow: View {
                     if let plan = usage?.plan, !plan.isEmpty {
                         Text(plan.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
                             .foregroundStyle(dim)
+                    }
+                    if isBest {
+                        // estado, não plano: visual do chip selecionado, sem cor nova (cor só para alerta, D-016)
+                        Text(bestNowLabel.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(.white.opacity(0.14), in: Capsule())
+                            .help(bestNowHelp(account.provider))
                     }
                     Spacer()
                     if let peak = usage?.peak {
