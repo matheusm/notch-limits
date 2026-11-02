@@ -294,6 +294,9 @@ footer { margin-top: clamp(100px, 14vw, 160px); padding: 28px 0 44px; border-top
 footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 footer .brand { display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
 footer img { width: 22px; height: 22px; border-radius: 5px; }
+footer .guides { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: -6px; }
+footer .guides a { color: var(--ink-2); text-decoration: none; }
+footer .guides a:hover { color: var(--ink); text-decoration: underline; }
 
 /* Reveal: content is visible by default, motion only enhances */
 .reveal { transition: opacity .9s var(--out), transform .9s var(--out); }
@@ -522,6 +525,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   <div class="wrap">
     <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
     <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><span>Guides</span><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
   </div>
 </footer>
 

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to check Claude Code usage limits on a Mac · notch-limits</title>
+<meta name="description" content="How the Claude Code 5-hour session and weekly limits reset, and where to check them on a Mac: /usage, claude.ai Settings → Usage, Codex /status and the notch.">
+<link rel="canonical" href="https://notch-limits.vercel.app/guides/check-claude-code-usage-limits-mac">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/guides/check-claude-code-usage-limits-mac">
+<meta property="og:title" content="How to check Claude Code usage limits on a Mac">
+<meta property="og:description" content="The 5-hour session, the weekly windows, /usage, Codex /status, and a way to keep every limit in view.">
+<meta property="og:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span>Guides</span></nav>
+    <h1>How to check Claude Code usage limits on a Mac</h1>
+    <p class="lede">On a Claude Pro, Max or Team plan, Claude Code runs against two clocks: a five-hour session and a weekly limit. This guide explains how each one resets, where to check them on a Mac, and how to keep them in view while you work.</p>
+    <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
+
+    <h2 id="limits">The limits Claude Code counts against</h2>
+    <p>Claude Code and Claude share the same limits: everything you do in either counts against the same windows. There are three kinds.</p>
+    <table>
+      <thead>
+        <tr><th scope="col">Window</th><th scope="col">How it works</th><th scope="col">In notch-limits</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Five-hour session</td><td>Opens with your first message and resets in full five hours later.</td><td><code>5h</code>, with a countdown to the reset</td></tr>
+        <tr><td>Weekly</td><td>Applies across all models. Resets at a fixed day and time assigned to your account, no matter when you started.</td><td><code>Weekly</code>, with the reset day and time</td></tr>
+        <tr><td>Weekly, per model</td><td>A separate weekly limit for one model. Some plans have one for Fable.</td><td>The model's name, with the reset day and time</td></tr>
+      </tbody>
+    </table>
+    <p>The session and weekly windows are shared across every model, so switching models with <code>/model</code> won't get you past them. A model-specific limit is different: after one, a model outside that family keeps you working.</p>
+    <p>Team and Enterprise seats work the same way: each seat's allowance resets on a rolling five-hour window and a weekly window.</p>
+
+    <h2 id="usage">Check in Claude Code with /usage</h2>
+    <p>Type <code>/usage</code> at the Claude Code prompt. On a subscription it shows your plan usage bars, next to activity stats and a breakdown of what counts against your limits. It runs right away, even while Claude is responding. <code>/cost</code> and <code>/stats</code> open the same screen.</p>
+    <ul>
+      <li><strong>It covers one account.</strong> <code>/usage</code> reports the account the current terminal is signed in to. If you use more than one, you check each one separately.</li>
+      <li><strong>The usage endpoint is rate limited.</strong> When <code>/usage</code> can't fetch fresh numbers, it shows the last bars it loaded on this Mac in the past 60 minutes, with a "Showing last-known usage" note.</li>
+    </ul>
+
+    <h2 id="claude-ai">Check on claude.ai</h2>
+    <p>Open <a href="https://claude.ai/settings/usage">Settings → Usage on claude.ai</a>. Under Current session it shows how much of the five-hour window you've used and the time remaining, and it lists your next weekly reset.</p>
+
+    <h2 id="codex">Check Codex with /status</h2>
+    <p>If you also use OpenAI Codex with a ChatGPT sign-in, type <code>/status</code> in the Codex CLI. Along with the session summary, it lists your rate limits: how much is left in each window and when it resets. To keep them on screen, <code>/statusline</code> can add a limits item to the Codex footer.</p>
+
+    <h2 id="notch">Keep every limit in view with notch-limits</h2>
+    <p>Each check above is a command or a tab you have to remember, one account at a time. notch-limits is a small Mac app that keeps the same numbers around the MacBook notch.</p>
+    <ul>
+      <li><strong>One ring per account.</strong> Each ring fills to the highest of that account's windows, since that's the limit you'll hit first.</li>
+      <li><strong>Hover for detail.</strong> The notch expands into every window, with its percentage and reset time.</li>
+      <li><strong>Quiet until it matters.</strong> Rings stay gray, turn orange from 70% and red from 90%.</li>
+      <li><strong>Local-first.</strong> It reads the usage snapshot Claude Code already writes to <code>~/.claude.json</code> and the rate limits Codex writes to its session logs. It only calls the usage endpoint, the same one <code>/usage</code> uses, when the newest data is more than 10 minutes old. Opening the panel never makes a request.</li>
+      <li><strong>Clear about freshness.</strong> Each account shows how old its data is, and the label turns orange after 15 minutes.</li>
+      <li><strong>No notch, no problem.</strong> On a Mac without a notch, or in clamshell mode with an external display, it moves to the menu bar.</li>
+    </ul>
+    <p>It doesn't replace <code>/usage</code>: the breakdown of what is using your plan stays in Claude Code. notch-limits answers the quicker question, which is how much is left and when it resets.</p>
+
+    <section class="get" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+
+    <p class="next"><a href="/guides/multiple-claude-code-accounts">Next: use multiple Claude Code accounts with CLAUDE_CONFIG_DIR →</a></p>
+
+    <h2 id="sources">Sources</h2>
+    <ul class="sources">
+      <li><a href="https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work">Claude Help Center: How do usage and length limits work?</a></li>
+      <li><a href="https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan">Claude Help Center: Use Claude Code with your Pro, Max, or Ultra plan</a></li>
+      <li><a href="https://code.claude.com/docs/en/commands">Claude Code docs: Commands</a></li>
+      <li><a href="https://code.claude.com/docs/en/costs">Claude Code docs: Manage costs effectively</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/developer-commands?surface=cli">Codex docs: Developer commands</a></li>
+      <li><a href="https://github.com/matheusm/notch-limits#how-it-works">notch-limits README: How it works</a></li>
+    </ul>
+    <p>notch-limits is an unofficial community project, not affiliated with or endorsed by Anthropic or OpenAI. Plans and limits change; the linked docs are the source of truth.</p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><span>Guides</span><a href="/guides/check-claude-code-usage-limits-mac" aria-current="page">Check Claude Code usage limits on a Mac</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>
