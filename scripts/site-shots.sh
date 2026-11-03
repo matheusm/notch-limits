@@ -24,3 +24,7 @@ for png in "$OUT"/site-*.png; do
   size=$(sips -g pixelWidth -g pixelHeight "$png" | awk '/pixel/ { printf "%s ", $2 }')
   echo "site/shots/$name.webp  ${size}px  $(( $(stat -f %z "site/shots/$name.webp") / 1024 )) KB"
 done
+
+# O README mostra o mesmo painel; PNG porque é o que o GitHub e os clientes de Markdown mostram em todo lugar
+cp "$OUT/site-notch-panel.png" assets/screenshot-expanded.png
+echo "assets/screenshot-expanded.png  $(( $(stat -f %z assets/screenshot-expanded.png) / 1024 )) KB"
