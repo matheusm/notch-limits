@@ -2,11 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://notch-limits.vercel.app/</loc>
+    <lastmod>2026-11-02</lastmod>
+  </url>
+  <url>
+    <loc>https://notch-limits.vercel.app/guides</loc>
+    <lastmod>2026-11-02</lastmod>
   </url>
   <url>
     <loc>https://notch-limits.vercel.app/guides/check-claude-code-usage-limits-mac</loc>
+    <lastmod>2026-11-02</lastmod>
+  </url>
+  <url>
+    <loc>https://notch-limits.vercel.app/guides/claude-code-usage-limit-reached</loc>
+    <lastmod>2026-11-02</lastmod>
+  </url>
+  <url>
+    <loc>https://notch-limits.vercel.app/guides/codex-usage-limits</loc>
+    <lastmod>2026-11-02</lastmod>
   </url>
   <url>
     <loc>https://notch-limits.vercel.app/guides/multiple-claude-code-accounts</loc>
+    <lastmod>2026-11-02</lastmod>
+  </url>
+  <url>
+    <loc>https://notch-limits.vercel.app/changelog</loc>
+    <lastmod>2026-11-02</lastmod>
   </url>
 </urlset>

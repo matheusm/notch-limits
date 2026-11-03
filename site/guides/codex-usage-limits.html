@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to check Codex usage limits on a ChatGPT plan · notch-limits</title>
+<meta name="description" content="How Codex usage limits work on ChatGPT plans, where to check them (the usage dashboard, /status and /statusline in the Codex CLI) and what to do at the limit.">
+<link rel="canonical" href="https://notch-limits.vercel.app/guides/codex-usage-limits">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/guides/codex-usage-limits">
+<meta property="og:title" content="How to check Codex usage limits on a ChatGPT plan">
+<meta property="og:description" content="How Codex limits work on ChatGPT plans, where to check them on the web and in the CLI, and what to do when you reach one.">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/codex-usage-limits.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits guide card: How to check Codex usage limits on a ChatGPT plan.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/codex-usage-limits.jpg">
+<meta name="twitter:image:alt" content="notch-limits guide card: How to check Codex usage limits on a ChatGPT plan.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "How to check Codex usage limits on a ChatGPT plan",
+      "description": "How Codex usage limits work on ChatGPT plans, where to check them (the usage dashboard, /status and /statusline in the Codex CLI) and what to do at the limit.",
+      "datePublished": "2026-11-02",
+      "dateModified": "2026-11-02",
+      "author": {
+        "@type": "Person",
+        "name": "Matheus Martins",
+        "url": "https://github.com/matheusm"
+      },
+      "image": "https://notch-limits.vercel.app/og/codex-usage-limits.jpg",
+      "mainEntityOfPage": "https://notch-limits.vercel.app/guides/codex-usage-limits"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://notch-limits.vercel.app/guides"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "How to check Codex usage limits on a ChatGPT plan"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><a href="/guides">Guides</a></nav>
+    <h1>How to check Codex usage limits on a ChatGPT plan</h1>
+    <p class="lede">When you sign in to Codex with ChatGPT, your plan sets how much you can use it. This guide explains how those limits work, where to check what's left, on the web and in the Codex CLI, and what to do when you reach one.</p>
+    <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
+
+    <h2 id="limits">How Codex limits work</h2>
+    <p>Codex is included in the ChatGPT Free, Go, Plus, Pro, Business, Edu and Enterprise plans. How much of it you can use depends on the plan:</p>
+    <ul>
+      <li><strong>A five-hour window on some plans.</strong> OpenAI publishes estimates of local messages per five-hour period for Plus and Standard Business. Pro plans currently have no five-hour limit.</li>
+      <li><strong>Weekly limits may also apply.</strong></li>
+      <li><strong>One allowance for local and cloud work.</strong> Local messages and cloud chats share your plan's usage allowance. ChatGPT Work also shares usage with Codex: inside ChatGPT it uses the same usage limits.</li>
+      <li><strong>Flexible pricing.</strong> Enterprise and Edu users with flexible pricing have no fixed rate limits; usage scales with credits.</li>
+    </ul>
+    <p>This guide doesn't copy the per-plan estimates. The <a href="https://learn.chatgpt.com/docs/pricing">Codex pricing page</a> has the current ones.</p>
+
+    <h2 id="dashboard">Check on the web</h2>
+    <p>Open the <a href="https://chatgpt.com/codex/settings/usage">Codex usage dashboard</a> while signed in to ChatGPT. It shows your current limits.</p>
+
+    <h2 id="cli">Check in the Codex CLI</h2>
+    <ul>
+      <li><strong><code>/status</code></strong> shows your remaining usage limits during a session, such as the five-hour and weekly windows, along with the session's configuration and token usage.</li>
+      <li><strong><code>/statusline</code></strong> keeps them on screen. Turn on the rate-limits item in the picker and the footer updates right away; the choice is saved to <code>tui.status_line</code> in <code>config.toml</code>.</li>
+      <li><strong><code>/usage</code></strong> shows your ChatGPT token activity, daily, weekly or cumulative. When you have an earned rate-limit reset, it's also where you redeem it.</li>
+      <li><strong><code>codex login status</code></strong>, run in your shell, prints the active authentication method, so you can confirm you're signed in with ChatGPT rather than an API key.</li>
+    </ul>
+
+    <h2 id="reached">When you reach a limit</h2>
+    <ul>
+      <li><strong>A turn already running can continue.</strong> If you reach your limit during an active turn, the agent can keep working on that turn, subject to fair use limits.</li>
+      <li><strong>Buy credits.</strong> Plus and Pro users can buy additional credits to keep working without upgrading their plan. Business, Edu and Enterprise plans with flexible pricing can buy additional workspace credits.</li>
+      <li><strong>Use an API key for local chats.</strong> Anyone can run extra local chats with an API key, charged at standard API rates.</li>
+      <li><strong>Or wait for the reset.</strong> The usage dashboard and <code>/status</code> show where each limit stands.</li>
+    </ul>
+
+    <h2 id="notch">Keep Codex limits in view with notch-limits</h2>
+    <p>notch-limits is a small Mac app that keeps your Codex limits around the MacBook notch, next to your Claude Code accounts.</p>
+    <figure class="shot">
+      <img src="/shots/notch-panel.webp" width="532" height="459" loading="lazy" decoding="async" alt="The expanded notch-limits panel with three accounts. Claude, Max plan, tagged Best now: five-hour window 18%, weekly 31%. Claude Work, Pro plan: five-hour window 80% in orange with the line &ldquo;At this pace: limit today&rdquo; under it, weekly 46%. Codex, Plus plan: five-hour window 12%, weekly 30%. Each window shows when it resets.">
+      <figcaption>Codex next to two Claude Code accounts, with each window it reports and when it resets.</figcaption>
+    </figure>
+    <ul>
+      <li><strong>No request for most updates.</strong> Codex writes its rate limits to the session logs in <code>$CODEX_HOME/sessions</code> on every response. notch-limits reads the latest ones and only calls the usage endpoint when that data is more than 10 minutes old. Opening the panel never makes a request.</li>
+      <li><strong>Every window Codex reports.</strong> Hover the notch to see each one with its percentage and reset time. Rings stay gray, turn orange from 70% and red from 90%.</li>
+      <li><strong>Found on its own.</strong> <code>~/.codex</code>, and folders such as <code>~/.codex-team</code>, show up as accounts when they contain an <code>auth.json</code>, at launch and whenever you open Settings. A Codex home kept anywhere else goes in <a href="/guides/multiple-claude-code-accounts#accounts-json"><code>accounts.json</code></a>.</li>
+      <li><strong>Read-only.</strong> It reads the login in <code>auth.json</code> and never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.</li>
+    </ul>
+    <div class="note">
+      <h3>Good to know</h3>
+      <ul>
+        <li>Codex can keep its login in your operating system's credential store instead of <code>auth.json</code>. The <code>cli_auth_credentials_store</code> setting decides: <code>file</code> writes <code>auth.json</code> under <code>CODEX_HOME</code>, <code>keyring</code> uses the credential store, and <code>auto</code> uses the credential store when it's available and falls back to <code>auth.json</code> otherwise.</li>
+        <li>notch-limits reads only <code>auth.json</code>, so it doesn't find a Codex login kept in the credential store. To check, look for <code>auth.json</code> in your Codex home (<code>~/.codex</code> by default).</li>
+      </ul>
+    </div>
+
+    <section class="get-card" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+
+    <p class="next"><a href="/guides/multiple-claude-code-accounts">Next: use multiple Claude Code accounts with CLAUDE_CONFIG_DIR →</a></p>
+
+    <h2 id="sources">Sources</h2>
+    <ul class="sources">
+      <li><a href="https://learn.chatgpt.com/docs/pricing">Codex docs: Pricing</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/cli/slash-commands/">Codex docs: CLI slash commands (<code>/status</code>, <code>/statusline</code>, <code>/usage</code>)</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/developer-commands?surface=cli">Codex docs: Developer commands (<code>codex login status</code>)</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/auth">Codex docs: Authentication (<code>cli_auth_credentials_store</code>)</a></li>
+      <li><a href="https://github.com/matheusm/notch-limits#how-it-works">notch-limits README: How it works</a></li>
+      <li><a href="https://github.com/matheusm/notch-limits#configuration">notch-limits README: Configuration</a></li>
+    </ul>
+    <p>notch-limits is an unofficial community project, not affiliated with or endorsed by Anthropic or OpenAI. Plans and limits change; the linked docs are the source of truth.</p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog">Changelog</a></span></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides">Guides</a><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits" aria-current="page">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>

@@ -14,9 +14,56 @@
 <meta property="og:url" content="https://notch-limits.vercel.app/guides/check-claude-code-usage-limits-mac">
 <meta property="og:title" content="How to check Claude Code usage limits on a Mac">
 <meta property="og:description" content="The 5-hour session, the weekly windows, /usage, Codex /status, and a way to keep every limit in view.">
-<meta property="og:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/check-claude-code-usage-limits-mac.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits guide card: How to check Claude Code usage limits on a Mac.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/check-claude-code-usage-limits-mac.jpg">
+<meta name="twitter:image:alt" content="notch-limits guide card: How to check Claude Code usage limits on a Mac.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "How to check Claude Code usage limits on a Mac",
+      "description": "How the Claude Code 5-hour session and weekly limits reset, and where to check them on a Mac: /usage, claude.ai Settings → Usage, Codex /status and the notch.",
+      "datePublished": "2026-11-02",
+      "dateModified": "2026-11-02",
+      "author": {
+        "@type": "Person",
+        "name": "Matheus Martins",
+        "url": "https://github.com/matheusm"
+      },
+      "image": "https://notch-limits.vercel.app/og/check-claude-code-usage-limits-mac.jpg",
+      "mainEntityOfPage": "https://notch-limits.vercel.app/guides/check-claude-code-usage-limits-mac"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://notch-limits.vercel.app/guides"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "How to check Claude Code usage limits on a Mac"
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -54,7 +101,7 @@
 
 <main>
   <article class="doc">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span>Guides</span></nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><a href="/guides">Guides</a></nav>
     <h1>How to check Claude Code usage limits on a Mac</h1>
     <p class="lede">On a Claude Pro, Max or Team plan, Claude Code runs against two clocks: a five-hour session and a weekly limit. This guide explains how each one resets, where to check them on a Mac, and how to keep them in view while you work.</p>
     <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
@@ -85,10 +132,15 @@
     <p>Open <a href="https://claude.ai/settings/usage">Settings → Usage on claude.ai</a>. Under Current session it shows how much of the five-hour window you've used and the time remaining, and it lists your next weekly reset.</p>
 
     <h2 id="codex">Check Codex with /status</h2>
-    <p>If you also use OpenAI Codex with a ChatGPT sign-in, type <code>/status</code> in the Codex CLI. Along with the session summary, it lists your rate limits: how much is left in each window and when it resets. To keep them on screen, <code>/statusline</code> can add a limits item to the Codex footer.</p>
+    <p>If you also use OpenAI Codex with a ChatGPT sign-in, type <code>/status</code> in the Codex CLI. Along with the session configuration, it shows your remaining usage limits, such as the five-hour and weekly windows. To keep them on screen, <code>/statusline</code> can add a rate-limits item to the Codex footer.</p>
+    <p>How Codex limits work on each plan, the web dashboard and what to do at the limit are in <a href="/guides/codex-usage-limits">How to check Codex usage limits on a ChatGPT plan</a>.</p>
 
     <h2 id="notch">Keep every limit in view with notch-limits</h2>
     <p>Each check above is a command or a tab you have to remember, one account at a time. notch-limits is a small Mac app that keeps the same numbers around the MacBook notch.</p>
+    <figure class="shot">
+      <img src="/shots/notch-panel.webp" width="532" height="459" loading="lazy" decoding="async" alt="The expanded notch-limits panel with three accounts. Claude, Max plan, tagged Best now: five-hour window 18%, weekly 31%. Claude Work, Pro plan: five-hour window 80% in orange with the line &ldquo;At this pace: limit today&rdquo; under it, weekly 46%. Codex, Plus plan: five-hour window 12%, weekly 30%. Each window shows when it resets.">
+      <figcaption>The expanded notch: every window with its percentage and reset time, a pace tick on each bar, and a line in orange when an account is on track to run out.</figcaption>
+    </figure>
     <ul>
       <li><strong>One ring per account.</strong> Each ring fills to the highest of that account's windows, since that's the limit you'll hit first.</li>
       <li><strong>Hover for detail.</strong> The notch expands into every window, with its percentage and reset time.</li>
@@ -121,7 +173,7 @@
       <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
     </section>
 
-    <p class="next"><a href="/guides/multiple-claude-code-accounts">Next: use multiple Claude Code accounts with CLAUDE_CONFIG_DIR →</a></p>
+    <p class="next"><a href="/guides/claude-code-usage-limit-reached">Next: what to do when you hit the Claude Code usage limit →</a></p>
 
     <h2 id="sources">Sources</h2>
     <ul class="sources">
@@ -129,7 +181,8 @@
       <li><a href="https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan">Claude Help Center: Use Claude Code with your Pro, Max, or Ultra plan</a></li>
       <li><a href="https://code.claude.com/docs/en/commands">Claude Code docs: Commands</a></li>
       <li><a href="https://code.claude.com/docs/en/costs">Claude Code docs: Manage costs effectively</a></li>
-      <li><a href="https://learn.chatgpt.com/docs/developer-commands?surface=cli">Codex docs: Developer commands</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/pricing">Codex docs: Pricing (<code>/status</code> and remaining limits)</a></li>
+      <li><a href="https://learn.chatgpt.com/docs/cli/slash-commands/">Codex docs: CLI slash commands (<code>/status</code>, <code>/statusline</code>)</a></li>
       <li><a href="https://github.com/matheusm/notch-limits#how-it-works">notch-limits README: How it works</a></li>
     </ul>
     <p>notch-limits is an unofficial community project, not affiliated with or endorsed by Anthropic or OpenAI. Plans and limits change; the linked docs are the source of truth.</p>
@@ -138,9 +191,9 @@
 
 <footer>
   <div class="wrap">
-    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog">Changelog</a></span></span>
     <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
-    <nav class="guides" aria-label="Guides"><span>Guides</span><a href="/guides/check-claude-code-usage-limits-mac" aria-current="page">Check Claude Code usage limits on a Mac</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides">Guides</a><a href="/guides/check-claude-code-usage-limits-mac" aria-current="page">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
   </div>
 </footer>
 

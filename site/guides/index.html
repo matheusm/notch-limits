@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guides to Claude Code and Codex usage limits · notch-limits</title>
+<meta name="description" content="Short, sourced guides to Claude Code and Codex usage limits: checking them on a Mac, hitting one, Codex on ChatGPT plans, and running multiple accounts.">
+<link rel="canonical" href="https://notch-limits.vercel.app/guides">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/guides">
+<meta property="og:title" content="Guides to Claude Code and Codex usage limits">
+<meta property="og:description" content="Short, sourced answers: checking Claude Code limits on a Mac, what to do when you hit one, Codex limits on ChatGPT plans, and multiple accounts.">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/guides.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits guides card: Claude Code and Codex usage limits, explained.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/guides.jpg">
+<meta name="twitter:image:alt" content="notch-limits guides card: Claude Code and Codex usage limits, explained.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span aria-current="page">Guides</span></nav>
+    <h1>Guides</h1>
+    <p class="lede">Short, sourced answers about Claude Code and Codex usage limits. Each guide links the official Anthropic or OpenAI docs it's based on.</p>
+
+    <ul class="guide-list">
+      <li>
+        <h2><a href="/guides/check-claude-code-usage-limits-mac">How to check Claude Code usage limits on a Mac</a></h2>
+        <p>The five-hour session and weekly windows, how each one resets, and where to check them: <code>/usage</code>, claude.ai and the notch.</p>
+      </li>
+      <li>
+        <h2><a href="/guides/claude-code-usage-limit-reached">Hit the Claude Code usage limit? What it means and what to do</a></h2>
+        <p>Each limit message explained, when switching models helps, the automatic wait after the reset, and the errors that aren't your plan limit.</p>
+      </li>
+      <li>
+        <h2><a href="/guides/codex-usage-limits">How to check Codex usage limits on a ChatGPT plan</a></h2>
+        <p>How Codex limits work on ChatGPT plans, where to check them on the web and in the CLI, and what to do when you reach one.</p>
+      </li>
+      <li>
+        <h2><a href="/guides/multiple-claude-code-accounts">Use multiple Claude Code accounts with CLAUDE_<wbr>CONFIG_<wbr>DIR</a></h2>
+        <p>Keep a personal and a work account signed in side by side, one config directory each, and see every account's limits at once.</p>
+      </li>
+    </ul>
+
+    <section class="get-card" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog">Changelog</a></span></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides" aria-current="page">Guides</a><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>

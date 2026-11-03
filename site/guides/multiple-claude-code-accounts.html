@@ -14,9 +14,56 @@
 <meta property="og:url" content="https://notch-limits.vercel.app/guides/multiple-claude-code-accounts">
 <meta property="og:title" content="Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR">
 <meta property="og:description" content="One config directory and alias per account, one login each, and every account's limits around the notch.">
-<meta property="og:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/multiple-claude-code-accounts.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits guide card: Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/multiple-claude-code-accounts.jpg">
+<meta name="twitter:image:alt" content="notch-limits guide card: Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR",
+      "description": "Run personal and work Claude Code accounts side by side on macOS: one CLAUDE_CONFIG_DIR and alias per account, one login each, and all limits in one view.",
+      "datePublished": "2026-11-02",
+      "dateModified": "2026-11-02",
+      "author": {
+        "@type": "Person",
+        "name": "Matheus Martins",
+        "url": "https://github.com/matheusm"
+      },
+      "image": "https://notch-limits.vercel.app/og/multiple-claude-code-accounts.jpg",
+      "mainEntityOfPage": "https://notch-limits.vercel.app/guides/multiple-claude-code-accounts"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://notch-limits.vercel.app/guides"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR"
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -54,7 +101,7 @@
 
 <main>
   <article class="doc">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span>Guides</span></nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><a href="/guides">Guides</a></nav>
     <h1>Use multiple Claude Code accounts with CLAUDE_<wbr>CONFIG_<wbr>DIR</h1>
     <p class="lede">Claude Code keeps one login per configuration directory. Give each account its own directory and a shell alias, sign in once in each, and a personal plan and a work plan can stay signed in side by side, in different terminals, at the same time.</p>
     <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
@@ -83,6 +130,10 @@ alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</pre>
 
     <h2 id="notch">3. See every account's limits at once</h2>
     <p><code>/usage</code> only reports the account of the terminal you type it in. To see all of them together, notch-limits puts one ring per account around the MacBook notch. Hover it and it expands into each account's five-hour session and weekly windows, with the time each one resets. With two or more Claude Code accounts, the one with the most headroom gets a "Best now" tag.</p>
+    <figure class="shot">
+      <img src="/shots/notch-panel.webp" width="532" height="459" loading="lazy" decoding="async" alt="The expanded notch-limits panel with three accounts. Claude, Max plan, tagged Best now: five-hour window 18%, weekly 31%. Claude Work, Pro plan: five-hour window 80% in orange with the line &ldquo;At this pace: limit today&rdquo; under it, weekly 46%. Codex, Plus plan: five-hour window 12%, weekly 30%. Each window shows when it resets.">
+      <figcaption>Three accounts in the expanded notch. Claude has the most headroom, so it gets the Best now tag.</figcaption>
+    </figure>
     <p>In most setups there is nothing to configure. At launch, and whenever you open Settings, notch-limits looks at the folders directly inside your home folder:</p>
     <table>
       <thead>
@@ -104,6 +155,10 @@ alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</pre>
       <li><strong>Pick its icon.</strong></li>
       <li><strong>Move it up or down.</strong> The first half of the list sits left of the notch, the rest on the right.</li>
     </ul>
+    <figure class="shot shot--window">
+      <img src="/shots/settings.webp" width="380" height="373" loading="lazy" decoding="async" alt="The notch-limits Settings window. Accounts: Claude (~/.claude), Claude Work (~/.claude-work) and Codex (~/.codex), each marked Shown, with arrows to reorder them. Notifications: &ldquo;Notify at 90% and when a limit resets&rdquo; is on. A note says accounts in ~/.claude* and ~/.codex* are found automatically and changes are saved to ~/.config/notch-limits/accounts.json.">
+      <figcaption>Settings, with the accounts found in <code>~/.claude</code>, <code>~/.claude-work</code> and <code>~/.codex</code>.</figcaption>
+    </figure>
     <p>Changes apply immediately, with no restart and no network request, and are saved to <code>~/.config/notch-limits/accounts.json</code>.</p>
 
     <h3 id="accounts-json">When you still need accounts.json</h3>
@@ -185,9 +240,9 @@ alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</pre>
 
 <footer>
   <div class="wrap">
-    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog">Changelog</a></span></span>
     <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
-    <nav class="guides" aria-label="Guides"><span>Guides</span><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/multiple-claude-code-accounts" aria-current="page">Multiple Claude Code accounts</a></nav>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides">Guides</a><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts" aria-current="page">Multiple Claude Code accounts</a></nav>
   </div>
 </footer>
 

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Changelog · notch-limits</title>
+<meta name="description" content="What changed in each version of notch-limits, the free macOS app that shows Claude Code and Codex usage limits around the MacBook notch.">
+<link rel="canonical" href="https://notch-limits.vercel.app/changelog">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/changelog">
+<meta property="og:title" content="notch-limits changelog">
+<meta property="og:description" content="What changed in each version of notch-limits, newest first.">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/changelog.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits changelog card: What changed in each version.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/changelog.jpg">
+<meta name="twitter:image:alt" content="notch-limits changelog card: What changed in each version.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Changelog"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span aria-current="page">Changelog</span></nav>
+    <h1>Changelog</h1>
+    <p class="lede">What changed in each version, newest first. Downloads and release files are on <a href="https://github.com/matheusm/notch-limits/releases">GitHub Releases</a>, which also has a <a href="https://github.com/matheusm/notch-limits/releases.atom">feed</a> if you want to follow new versions.</p>
+
+    <section>
+      <h2 id="v1.1.0">v1.1.0</h2>
+      <p class="byline"><time datetime="2026-11-02">2 November 2026</time></p>
+      <ul>
+        <li><strong>Accounts found automatically.</strong> Claude Code config folders such as <code>~/.claude-work</code> that contain a <code>.claude.json</code>, and Codex homes such as <code>~/.codex</code> that contain an <code>auth.json</code>, show up at launch and whenever you open Settings. No JSON to write; folders kept anywhere else still go in <code>accounts.json</code> by hand.</li>
+        <li><strong>A Settings window.</strong> Open it with the gear in the expanded notch or the menu bar panel. Show, hide, rename, reorder and pick an icon for each account. Changes apply at once, with no restart and no network request, and are saved to <code>~/.config/notch-limits/accounts.json</code>. A file you wrote by hand is copied to <code>accounts.json.bak</code> before Settings first overwrites it.</li>
+        <li><strong>Pace on every bar.</strong> A faint tick on each bar in the notch panel marks where usage would be if spread evenly over the window. Under any window you're on track to hit before it resets, a line says when: "At this pace: limit today 4:26 PM". It's a straight-line projection from the latest reading, shown once 15% of the window has passed.</li>
+        <li><strong>Best now.</strong> With two or more accounts of the same provider, the expanded panel tags the one with the most headroom. Claude and Codex accounts are ranked separately.</li>
+        <li><strong>Optional notifications.</strong> A heads-up when a limit reaches 90%, and another when a limit you hit resets ("Claude Work is available again"). Off by default; turn them on in Settings. Text-only, with no sound and no extra network requests.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 id="v1.0.1">v1.0.1</h2>
+      <p class="byline"><time datetime="2026-11-02">2 November 2026</time></p>
+      <ul>
+        <li><strong>A polished installer.</strong> The DMG opens a branded window with large icons, a drag arrow and a shortcut to Applications.</li>
+        <li><strong>Renamed to Notch Limits.</strong> The app is now <code>Notch Limits.app</code>. The one-line installer and <code>build.sh</code> remove the old <code>NotchLimits.app</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 id="v1.0.0">v1.0.0</h2>
+      <p class="byline"><time datetime="2026-11-02">2 November 2026</time></p>
+      <ul>
+        <li><strong>First public release:</strong> Claude Code and Codex usage limits at the MacBook notch.</li>
+        <li><strong>One ring per account,</strong> expanding on hover into every limit window (5-hour session, weekly, per-model) with its reset time.</li>
+        <li><strong>Multiple accounts:</strong> Claude Code accounts through <code>CLAUDE_CONFIG_DIR</code>, plus Codex, configured in <code>~/.config/notch-limits/accounts.json</code>.</li>
+        <li><strong>Local-first:</strong> reads the usage snapshots Claude Code and Codex already write to disk, calls the usage API only when that data is more than 10 minutes old, and honors <code>Retry-After</code>.</li>
+        <li><strong>Data age on every account,</strong> and color only at 70% and 90%.</li>
+        <li><strong>Menu bar fallback</strong> on Macs without a notch, and launch at login.</li>
+        <li><strong>English, Português and Español,</strong> following your system language.</li>
+      </ul>
+    </section>
+
+    <section class="get-card" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog" aria-current="page">Changelog</a></span></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides">Guides</a><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>

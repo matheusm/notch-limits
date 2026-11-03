@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claude Code usage limit reached? What to do · notch-limits</title>
+<meta name="description" content="What each Claude Code usage limit message means, when /model helps, how the automatic wait after the reset works, and which errors are not your plan limit.">
+<link rel="canonical" href="https://notch-limits.vercel.app/guides/claude-code-usage-limit-reached">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/guides/claude-code-usage-limit-reached">
+<meta property="og:title" content="Hit the Claude Code usage limit? What it means and what to do">
+<meta property="og:description" content="Each limit message explained, when switching models helps, the automatic wait after the reset, and the errors that aren't your plan limit.">
+<meta property="og:image" content="https://notch-limits.vercel.app/og/claude-code-usage-limit-reached.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="notch-limits guide card: Hit the Claude Code usage limit? What to do.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://notch-limits.vercel.app/og/claude-code-usage-limit-reached.jpg">
+<meta name="twitter:image:alt" content="notch-limits guide card: Hit the Claude Code usage limit? What to do.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Hit the Claude Code usage limit? What it means and what to do",
+      "description": "What each Claude Code usage limit message means, when /model helps, how the automatic wait after the reset works, and which errors are not your plan limit.",
+      "datePublished": "2026-11-02",
+      "dateModified": "2026-11-02",
+      "author": {
+        "@type": "Person",
+        "name": "Matheus Martins",
+        "url": "https://github.com/matheusm"
+      },
+      "image": "https://notch-limits.vercel.app/og/claude-code-usage-limit-reached.jpg",
+      "mainEntityOfPage": "https://notch-limits.vercel.app/guides/claude-code-usage-limit-reached"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "notch-limits",
+          "item": "https://notch-limits.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://notch-limits.vercel.app/guides"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Hit the Claude Code usage limit? What it means and what to do"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><a href="/guides">Guides</a></nav>
+    <h1>Hit the Claude Code usage limit? What it means and what to do</h1>
+    <p class="lede">"You've hit your session limit" means one of your plan's usage windows has run out, and Claude Code stops sending requests until it resets. This guide explains each limit message, what you can do right away, the errors that look like a limit but aren't, and how to see the next one coming.</p>
+    <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
+
+    <h2 id="messages">What the message means</h2>
+    <p>Claude subscription plans include a rolling usage allowance. When part of it runs out, Claude Code shows one of these messages and blocks further requests until the reset time it names:</p>
+<pre class="code">You've hit your session limit · resets 3:45pm
+You've hit your weekly limit · resets Mon 12:00am
+You've hit your Opus limit · resets 3:45pm
+You've hit your Sonnet limit · resets 3:45pm</pre>
+    <table>
+      <thead>
+        <tr><th scope="col">Limit</th><th scope="col">Applies to</th><th scope="col">Does switching models help?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Session</td><td>Every model</td><td>No</td></tr>
+        <tr><td>Weekly</td><td>Every model</td><td>No</td></tr>
+        <tr><td>Opus</td><td>Opus models only</td><td>Yes: pick a model outside the Opus family</td></tr>
+        <tr><td>Sonnet</td><td>Sonnet models only</td><td>Yes: pick a model outside the Sonnet family</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>Both windows count at once.</strong> Usage counts against the session and weekly allowances at the same time, so one heavy burst can use up the weekly allowance before the session window resets.</li>
+      <li><strong>Switching models has a cost.</strong> Each model has its own prompt cache, so the first request after <code>/model</code> re-reads the whole conversation with no cache hits.</li>
+      <li><strong>"Usage limit reached · wrapping up"</strong> means you hit the five-hour limit while Claude was answering. Claude Code may keep going briefly to finish the step in progress. That allowance is small, capped and counts toward your weekly limit, and it never applies to a new message.</li>
+    </ul>
+    <p>How the five-hour and weekly windows open and reset is covered in <a href="/guides/check-claude-code-usage-limits-mac#limits">The limits Claude Code counts against</a>.</p>
+
+    <h2 id="now">What you can do now</h2>
+    <p>The Claude Help Center's short answer is to wait for the reset or upgrade your plan. Claude Code gives you a few more options.</p>
+
+    <h3 id="wait">Wait, and let Claude Code continue on its own</h3>
+    <p>Since Claude Code v2.1.234, an interactive session signed in with a claude.ai subscription waits in the open session and picks the task up again after the limit resets. It's on by default. While it waits, the bottom of the session shows:</p>
+<pre class="code">Usage limit reached · limit resets 3:45pm
+Continuing automatically at 3:45pm · Esc to cancel</pre>
+    <p>Keep the session open. At the reset, Claude Code prompts Claude to continue where it stopped; it doesn't resend your last message. It still asks for permissions as usual, so the task can pause on a prompt while you're away. After three automatic continuations without a new prompt from you, it stops and points you to <code>/rate-limit-options</code>.</p>
+    <ul>
+      <li><strong>To cancel:</strong> press <code>Esc</code> at an empty prompt, or <code>Ctrl+C</code>, while the lines show. Or run <code>/rate-limit-options</code> and pick <strong>Don't continue automatically</strong>.</li>
+      <li><strong>When it doesn't start on its own:</strong> when the reset is more than 24 hours away, as a weekly limit can be; in Remote Control and agent team teammate sessions; and after an Opus or Sonnet limit while you run a model outside that family. At your own terminal, Claude Code then opens the usage-limit options menu, where <strong>Wait here, then continue automatically</strong> starts the wait.</li>
+      <li><strong>When it isn't offered:</strong> in background sessions and <code>-p</code> runs, and with API keys or cloud providers, which are metered per request, so there is no reset to wait for.</li>
+      <li><strong>To turn it off:</strong> in <code>/config</code>, turn off <strong>Continue automatically at usage limit</strong>, or set <code>autoContinueAtUsageLimit</code> to <code>false</code> in your user settings. The Claude Desktop app's Code tab has its own <strong>Auto-continue when limits reset</strong> checkbox, set separately.</li>
+    </ul>
+
+    <h3 id="model">Switch models, for an Opus or Sonnet limit</h3>
+    <p>After "You've hit your Opus limit" or "You've hit your Sonnet limit", run <code>/model</code> and pick a model outside that family to keep working. It won't get you past the session or weekly limit, which every model shares. If you switch during an automatic wait, Claude Code checks whether usage is available again and continues right away if it is.</p>
+
+    <h3 id="credits">Add usage credits</h3>
+    <p>Usage credits let you keep working past your plan's limit. Run <code>/usage-credits</code> while signed in with your claude.ai subscription:</p>
+    <ul>
+      <li><strong>Pro, Max and Ultra:</strong> it opens Settings → Usage on claude.ai, where you turn usage credits on, add funds and can set a monthly spend limit.</li>
+      <li><strong>Team and Enterprise:</strong> it opens your organization's usage settings if you have billing access. If you don't, it asks you to confirm, then sends a request to your admins.</li>
+    </ul>
+    <p>Usage credits are billed at standard API rates, separately from your subscription. They are also separate from the monthly API credits included with Max and Ultra, which can't be used in Claude Code. Once credits are on, <code>/usage</code> shows a usage-credits row. If Claude Code is waiting for a reset when you finish adding credits with <code>/usage-credits</code>, it checks again and continues right away if usage is available.</p>
+
+    <h3 id="upgrade">Upgrade, or pay per use with a Console account</h3>
+    <p>A higher plan raises your base limits; <a href="https://claude.com/pricing">claude.com/pricing</a> lists the plans. Alternatively, a Claude Console account bills Claude Code per token through API credits instead of a plan allowance.</p>
+    <p>Check your environment before you rely on your subscription: if <code>ANTHROPIC_API_KEY</code> is set, Claude Code uses that key instead of your subscription, and you are charged for API usage.</p>
+
+    <h2 id="not-your-limit">Messages that are not your plan limit</h2>
+    <p>Some errors look like a limit but have nothing to do with your plan's allowance:</p>
+    <ul>
+      <li><strong><code>API Error: Server is temporarily limiting requests (not your usage limit)</code>.</strong> A short-lived throttle on the API side, unrelated to your quota. Since v2.1.199, Claude Code retries it automatically before showing it. Wait briefly and try again; if it persists, check <a href="https://status.claude.com">status.claude.com</a>.</li>
+      <li><strong><code>API Error: Repeated 529 Overloaded errors</code>.</strong> The API is at capacity across all users. It isn't your usage limit and doesn't count against your quota. Try again in a few minutes, or switch models with <code>/model</code>, since capacity is tracked per model.</li>
+      <li><strong><code>API Error: Request rejected (429)</code>.</strong> You hit the rate limit of an API key, an Amazon Bedrock project or a Google Cloud project. Run <code>/status</code> and confirm the active credential is the one you expect: a stray <code>ANTHROPIC_API_KEY</code> in your environment can route requests through a low-tier key instead of your subscription.</li>
+      <li><strong><code>rate limited until 3:14am</code> inside <code>/usage</code>.</strong> Only the usage display is limited: Claude Code can't fetch your plan limits again until then. Your work with Claude isn't affected. Press <code>r</code> after that time for fresh numbers.</li>
+    </ul>
+    <p>A context or auto-compact warning isn't a usage limit either. It means the conversation is close to the point where Claude Code summarizes older history to free space.</p>
+
+    <h2 id="next-time">See it coming next time</h2>
+    <p>Claude Code can warn you before a window runs out, with a message such as <code>You've used 85% of your session limit · resets 3:45pm</code>. Before that point, you have two ways to check:</p>
+    <ul>
+      <li><strong><code>/usage</code></strong> shows your plan usage bars and a breakdown of what counts against your limits, with suggested changes. <a href="/guides/check-claude-code-usage-limits-mac#usage">More on <code>/usage</code></a>.</li>
+      <li><strong>A custom status line</strong> can show the <code>rate_limits</code> fields, so your remaining allowance stays on screen in that terminal.</li>
+    </ul>
+    <p>Both show the account of the terminal you're in. notch-limits is a small Mac app that keeps every account's limits around the MacBook notch, so the next limit doesn't come as a surprise:</p>
+    <ul>
+      <li><strong>Quiet until it matters.</strong> Rings stay gray, turn orange from 70% and red from 90%.</li>
+      <li><strong>Pace, not just percent.</strong> A faint tick on each bar in the notch panel marks where usage would be if spread evenly over the window. If you're on track to hit a limit before it resets, the panel says when: "At this pace: limit today 4:26 PM". It's a straight-line projection from the latest reading, shown once 15% of the window has passed.</li>
+      <li><strong>Optional notifications.</strong> A heads-up when a limit reaches 90%, and another when a limit you hit resets. Off by default; turn them on in Settings.</li>
+      <li><strong>Best now, for accounts you already keep.</strong> If you use separate accounts for separate reasons, such as personal and work, the one with the most headroom gets a "Best now" tag. <a href="/guides/multiple-claude-code-accounts">Use multiple Claude Code accounts</a> shows the setup.</li>
+      <li><strong>Local-first.</strong> It reads the usage snapshot Claude Code already writes, and only calls the usage endpoint when that data is more than 10 minutes old. Opening the panel never makes a request.</li>
+    </ul>
+
+    <figure class="shot">
+      <img src="/shots/notch-panel.webp" width="532" height="459" loading="lazy" decoding="async" alt="The expanded notch-limits panel with three accounts. Claude, Max plan, tagged Best now: five-hour window 18%, weekly 31%. Claude Work, Pro plan: five-hour window 80% in orange with the line &ldquo;At this pace: limit today&rdquo; under it, weekly 46%. Codex, Plus plan: five-hour window 12%, weekly 30%. Each window shows when it resets.">
+      <figcaption>Claude Work is at 80% of its five-hour window and on pace to reach the limit before it resets, so the bar and the line under it turn orange.</figcaption>
+    </figure>
+
+    <h2 id="last-longer">Make your allowance last</h2>
+    <p>Claude Code sends your whole conversation with every request, so a long session draws more of your limits than its last message suggests. A few habits from Anthropic's guide to <a href="https://code.claude.com/docs/en/costs#reduce-token-usage">reducing token usage</a>:</p>
+    <ul>
+      <li><strong>Clear between tasks.</strong> <code>/clear</code> starts fresh when you switch to unrelated work, and costs nothing.</li>
+      <li><strong>Compact with a focus.</strong> <code>/compact Focus on code samples and API usage</code> tells Claude what to keep. Compacting reads the whole conversation, so it is a large request in itself.</li>
+      <li><strong>Match the model and effort to the job.</strong> Sonnet handles most coding tasks well and costs less than Opus, and a lower <code>/effort</code> level suits simpler tasks.</li>
+      <li><strong>Follow the <code>/usage</code> breakdown.</strong> It suggests a change for any habit behind 10% or more of your recent usage.</li>
+    </ul>
+
+    <section class="get-card" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+
+    <p class="next"><a href="/guides/codex-usage-limits">Next: how to check Codex usage limits on a ChatGPT plan →</a></p>
+
+    <h2 id="sources">Sources</h2>
+    <ul class="sources">
+      <li><a href="https://code.claude.com/docs/en/errors#youve-hit-your-session-limit">Claude Code docs: Errors › You've hit your session limit</a></li>
+      <li><a href="https://code.claude.com/docs/en/errors">Claude Code docs: Errors (429, 529 and server throttling)</a></li>
+      <li><a href="https://code.claude.com/docs/en/interactive-mode#wait-for-a-usage-limit-to-reset">Claude Code docs: Interactive mode › Wait for a usage limit to reset</a></li>
+      <li><a href="https://code.claude.com/docs/en/costs">Claude Code docs: Manage costs effectively</a></li>
+      <li><a href="https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan">Claude Help Center: Use Claude Code with your Pro, Max, or Ultra plan</a></li>
+      <li><a href="https://support.claude.com/en/articles/11647753-how-do-usage-and-length-limits-work">Claude Help Center: How do usage and length limits work?</a></li>
+      <li><a href="https://support.claude.com/en/articles/12429409-extra-usage-for-paid-claude-plans">Claude Help Center: Manage usage credits for paid Claude plans</a></li>
+      <li><a href="https://github.com/matheusm/notch-limits#features">notch-limits README: Features</a></li>
+    </ul>
+    <p>notch-limits is an unofficial community project, not affiliated with or endorsed by Anthropic or OpenAI. Plans and limits change; the linked docs are the source of truth.</p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22"><span>notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a> · <a href="/changelog">Changelog</a></span></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><a class="all" href="/guides">Guides</a><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/claude-code-usage-limit-reached" aria-current="page">Claude Code usage limit reached</a><a href="/guides/codex-usage-limits">Codex usage limits</a><a href="/guides/multiple-claude-code-accounts">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" data-fonts="pending">
+<head>
+<meta charset="utf-8">
+<!-- Modelo dos cards sociais (D-028). render.sh passa ?kicker=&title=&size= e renderiza em 1200×630.
+     O texto vem do HTML, nunca do modelo de imagem (D-024): assim o título sai letra por letra. -->
+<title>notch-limits social card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- tokens, pílula do notch e anéis vêm do site, para o card não divergir dele -->
+<link rel="stylesheet" href="../../site/guides/guides.css">
+<style>
+  html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+  body { position: relative; background: var(--ground) url("../../assets/og/background.jpg") center top / cover no-repeat; }
+  /* escurece o canto do texto: o contraste não depende da imagem gerada */
+  body::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top right, rgba(6, 7, 8, .9) 0%, rgba(6, 7, 8, 0) 62%);
+  }
+  .notch { transform: translateX(-50%) scale(2); transform-origin: 50% 0; }
+  .text {
+    position: absolute; left: 80px; right: 80px; top: 116px; bottom: 156px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .kicker { margin: 0; font-size: 22px; font-weight: 600; line-height: 1; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); }
+  .title {
+    margin: 20px 0 0; max-width: 960px;
+    font-size: calc(var(--size, 64) * 1px); line-height: 1.05; letter-spacing: -.035em; font-weight: 700;
+    color: var(--ink); text-wrap: balance;
+  }
+  .site {
+    position: absolute; left: 80px; bottom: 64px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 24px; font-weight: 500; line-height: 36px; color: var(--ink-2);
+  }
+  .site img { width: 36px; height: 36px; border-radius: 8px; }
+  /* sem Geist o card não sai: o texto fica oculto e render.sh falha */
+  html:not([data-fonts="geist"]) .text, html:not([data-fonts="geist"]) .site { visibility: hidden; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- mesma pílula do cabeçalho dos guias, com os anéis 64 / 27 / 91 -->
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<div class="text">
+  <p class="kicker"></p>
+  <h1 class="title"></h1>
+</div>
+<p class="site"><img src="../../site/favicon.png" alt="">notch-limits.vercel.app</p>
+
+<script>
+  const q = new URLSearchParams(location.search);
+  const root = document.documentElement;
+  const title = document.querySelector('.title');
+  document.querySelector('.kicker').textContent = q.get('kicker') || '';
+  title.textContent = q.get('title') || '';
+  if (q.get('size')) root.style.setProperty('--size', q.get('size'));
+
+  // render.sh lê data-fonts e data-lines no DOM: falha se a Geist não carregou ou o título passou de 3 linhas
+  addEventListener('load', async () => {
+    // textContent, não innerText: o texto ainda está oculto e innerText viria vazio
+    const text = document.querySelector('.text').textContent + document.querySelector('.site').textContent;
+    try {
+      const sets = await Promise.all(['700 64px Geist', '600 22px Geist', '500 24px Geist'].map((f) => document.fonts.load(f, text)));
+      root.dataset.fonts = sets.every((s) => s.length && s.every((face) => face.status === 'loaded')) ? 'geist' : 'missing';
+    } catch {
+      root.dataset.fonts = 'missing';
+    }
+    root.dataset.lines = Math.round(title.getBoundingClientRect().height / parseFloat(getComputedStyle(title).lineHeight));
+  });
+</script>
+</body>
+</html>
