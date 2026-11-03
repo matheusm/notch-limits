@@ -5,6 +5,23 @@ import SwiftUI
 enum Glyph {
     case claude, codex
     case symbol(String)
+
+    /// Valor de "icon" no accounts.json: "claude", "codex" ou um SF Symbol
+    init(name: String) {
+        switch name {
+        case "claude": self = .claude
+        case "codex": self = .codex
+        default: self = .symbol(name)
+        }
+    }
+
+    var name: String {
+        switch self {
+        case .claude: "claude"
+        case .codex: "codex"
+        case .symbol(let symbol): symbol
+        }
+    }
 }
 
 /// Starburst do Claude: raios em cápsula alternando comprimento
@@ -58,13 +75,20 @@ struct RingIcon: View {
                     .stroke(progressTint ?? tint, style: StrokeStyle(lineWidth: size / 8, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
-            mark.opacity(percent == nil ? 0.4 : 1)
+            GlyphMark(glyph: glyph, tint: tint, size: size).opacity(percent == nil ? 0.4 : 1)
         }
         .frame(width: size, height: size)
         .padding(size / 16)
     }
+}
 
-    @ViewBuilder private var mark: some View {
+/// Logo do meio do anel, na proporção de um anel de `size`; também aparece sozinho no botão de ícone dos Ajustes
+struct GlyphMark: View {
+    let glyph: Glyph
+    let tint: Color
+    let size: CGFloat
+
+    var body: some View {
         switch glyph {
         case .claude: ClaudeMark().fill(tint).frame(width: size * 0.56, height: size * 0.56)
         case .codex: CodexMark().stroke(tint, lineWidth: size / 18).frame(width: size * 0.56, height: size * 0.56)

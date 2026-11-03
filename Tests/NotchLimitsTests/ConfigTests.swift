@@ -2,13 +2,15 @@ import Foundation
 import Testing
 @testable import NotchLimits
 
+// A home é sempre um TempDir: carregar as contas também varre a home, e o teste não pode ver a home real
 @Suite("accounts.json")
 struct ConfigTests {
     @Test func defaultsToClaudeAndCodexWithoutConfig() {
-        let accounts = loadAccounts(from: "/nonexistent/accounts.json")
+        let dir = TempDir()
+        let accounts = loadAccounts(from: "/nonexistent/accounts.json", home: dir.path)
 
         #expect(accounts.map(\.name) == ["Claude", "Codex"])
-        #expect(accounts.map(\.provider.path) == ["\(home)/.claude", "\(home)/.codex"])
+        #expect(accounts.map(\.provider.path) == ["\(dir.path)/.claude", "\(dir.path)/.codex"])
         #expect(accounts.map(\.glyph.name) == ["claude", "codex"])
     }
 
@@ -16,7 +18,7 @@ struct ConfigTests {
         let dir = TempDir()
         let file = dir.write("accounts.json", "{ not json")
 
-        #expect(loadAccounts(from: file).map(\.name) == ["Claude", "Codex"])
+        #expect(loadAccounts(from: file, home: dir.path).map(\.name) == ["Claude", "Codex"])
     }
 
     @Test func parsesAccountsExpandingPathsAndSkippingUnknownProviders() {
@@ -29,11 +31,11 @@ struct ConfigTests {
         ]
         """)
 
-        let accounts = loadAccounts(from: file)
+        let accounts = loadAccounts(from: file, home: dir.path)
 
         #expect(accounts.map(\.name) == ["Work", "Codex"])
         #expect(accounts.map(\.provider.name) == ["claude", "codex"])
-        #expect(accounts.map(\.provider.path) == ["\(home)/.claude-work", "/opt/codex"])
+        #expect(accounts.map(\.provider.path) == ["\(dir.path)/.claude-work", "/opt/codex"])
         #expect(accounts.map(\.glyph.name) == ["leaf.fill", "codex"])
     }
 

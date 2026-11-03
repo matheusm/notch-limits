@@ -24,36 +24,19 @@ final class TempDir {
     }
 }
 
-extension Provider {
-    var path: String {
-        switch self {
-        case .claude(let dir): dir
-        case .codex(let home): home
-        }
-    }
-
-    var name: String {
-        switch self {
-        case .claude: "claude"
-        case .codex: "codex"
-        }
+extension TempDir {
+    /// Home falsa: cria cada arquivo (e as pastas no caminho) com "{}", o bastante para a descoberta
+    convenience init(files: [String]) {
+        self.init()
+        for file in files { write(file, "{}") }
     }
 }
 
-extension Glyph {
-    var name: String {
-        switch self {
-        case .claude: "claude"
-        case .codex: "codex"
-        case .symbol(let symbol): symbol
-        }
-    }
+func window(_ kind: WindowKind, _ percent: Double = 10, resetsAt: Date? = nil) -> LimitWindow {
+    LimitWindow(kind: kind, percent: percent, resetsAt: resetsAt)
 }
 
-func window(_ kind: WindowKind, _ percent: Double = 10) -> LimitWindow {
-    LimitWindow(kind: kind, percent: percent, resetsAt: nil)
-}
-
-func usage(minutesAgo: Double, percent: Double = 10) -> Usage {
-    Usage(windows: [window(.weekly, percent)], updatedAt: Date().addingTimeInterval(-minutesAgo * 60))
+/// Uso com uma janela semanal lido há `minutesAgo` minutos; `now` fixo para os testes com relógio injetado
+func usage(minutesAgo: Double, percent: Double = 10, now: Date = Date()) -> Usage {
+    Usage(windows: [window(.weekly, percent)], updatedAt: now.addingTimeInterval(-minutesAgo * 60))
 }

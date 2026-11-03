@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Multiple Claude Code accounts with CLAUDE_CONFIG_DIR · notch-limits</title>
+<meta name="description" content="Run personal and work Claude Code accounts side by side on macOS: one CLAUDE_CONFIG_DIR and alias per account, one login each, and all limits in one view.">
+<link rel="canonical" href="https://notch-limits.vercel.app/guides/multiple-claude-code-accounts">
+<meta name="theme-color" content="#060708">
+<link rel="icon" href="/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="notch-limits">
+<meta property="og:url" content="https://notch-limits.vercel.app/guides/multiple-claude-code-accounts">
+<meta property="og:title" content="Use multiple Claude Code accounts with CLAUDE_CONFIG_DIR">
+<meta property="og:description" content="One config directory and alias per account, one login each, and every account's limits around the notch.">
+<meta property="og:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/matheusm/notch-limits/main/assets/banner.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-claude" viewBox="-10 -10 20 20"><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(7.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(37.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(67.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(97.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(127.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(157.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(187.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(217.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(247.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(277.5)"/><rect x="-1.3" y="-10" width="2.6" height="10" rx="1.3" transform="rotate(307.5)"/><rect x="-1.3" y="-7.8" width="2.6" height="7.8" rx="1.3" transform="rotate(337.5)"/></symbol>
+    <symbol id="g-codex" viewBox="-11 -11 22 22"><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(0)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(60)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(120)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(180)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(240)"/><rect x="-.5" y="-9.5" width="5" height="9" rx="2.5" transform="rotate(300)"/></symbol>
+    <symbol id="g-leaf" viewBox="-10 -10 20 20"><path d="M-8 8C-8.6-1.6-2.6-8.4 8.6-8.6 8.4 2.4 2 8.2-8 8Z"/><path d="M-8 8 3.4-3.4" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="menubar">
+  <div class="menubar__side">
+    <a class="menubar__brand" href="/" aria-label="Notch Limits home"><img src="/favicon.png" alt="" width="18" height="18"><span>Notch Limits</span></a>
+  </div>
+  <div class="menubar__side">
+    <a class="item" href="https://github.com/matheusm/notch-limits">GitHub</a>
+    <a class="get" href="/#install">Download</a>
+  </div>
+</header>
+
+<div class="notch" aria-hidden="true">
+  <div class="ear">
+    <svg class="ring" viewBox="0 0 36 36" style="--p:64"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-claude" class="glyph" x="9" y="9" width="18" height="18"/></svg>
+    <svg class="ring" viewBox="0 0 36 36" style="--p:27"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-leaf" class="glyph" x="9.5" y="9.5" width="17" height="17"/></svg>
+  </div>
+  <div></div>
+  <div class="ear">
+    <svg class="ring is-crit" viewBox="0 0 36 36" style="--p:91"><circle class="track" cx="18" cy="18" r="15.4"/><circle class="fill" cx="18" cy="18" r="15.4" pathLength="100"/><use href="#g-codex" class="glyph glyph--stroke" x="8.5" y="8.5" width="19" height="19"/></svg>
+  </div>
+</div>
+
+<main>
+  <article class="doc">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">notch-limits</a><span aria-hidden="true">/</span><span>Guides</span></nav>
+    <h1>Use multiple Claude Code accounts with CLAUDE_<wbr>CONFIG_<wbr>DIR</h1>
+    <p class="lede">Claude Code keeps one login per configuration directory. Give each account its own directory and a shell alias, sign in once in each, and a personal plan and a work plan can stay signed in side by side, in different terminals, at the same time.</p>
+    <p class="byline">Updated <time datetime="2026-11-02">2 November 2026</time></p>
+
+    <h2 id="how">How CLAUDE_CONFIG_DIR works</h2>
+    <p><code>CLAUDE_CONFIG_DIR</code> tells Claude Code where to keep its configuration instead of the default <code>~/.claude</code>. Settings, session history and plugins live there, and so does the login: each directory has its own claude.ai login or API key.</p>
+    <p>On macOS the login itself is stored in the Keychain, in an entry keyed to the directory. A session started with a different <code>CLAUDE_CONFIG_DIR</code> reads a different entry, so each account keeps its own login.</p>
+
+    <h2 id="alias">1. Add an alias for each extra account</h2>
+    <p>Keep <code>claude</code> for your default account and add an alias for every other one. In zsh, the macOS default shell, that goes in <code>~/.zshrc</code>; in bash, in <code>~/.bashrc</code>.</p>
+<pre class="code"><span class="c"># ~/.zshrc</span>
+alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'</pre>
+    <p>Add one line per extra account, each with its own directory. Open a new terminal so the alias loads.</p>
+
+    <h2 id="login">2. Sign in once per directory</h2>
+    <p>Run <code>claude-work</code>. The first time, Claude Code walks you through login and setup for the new directory, so sign in with the account that belongs there. After that, every <code>claude-work</code> session uses that account.</p>
+    <p>To confirm which account a terminal is using, type <code>/status</code> in Claude Code. It shows the version, model, account and connectivity.</p>
+    <div class="note">
+      <h3>Good to know</h3>
+      <ul>
+        <li>Settings live in each directory, so preferences in <code>~/.claude/settings.json</code> don't follow you into <code>~/.claude-work</code>. Copy the file across if you want the same setup in both.</li>
+        <li>If you set <code>CLAUDE_CONFIG_DIR</code> in a settings file instead of your shell, write an absolute path. Project and local settings ignore it.</li>
+        <li>Separate directories don't keep two Claude Console sign-ins made without an API key apart, because Claude Code stores that kind of sign-in outside the configuration directory.</li>
+      </ul>
+    </div>
+
+    <h2 id="notch">3. See every account's limits at once</h2>
+    <p><code>/usage</code> only reports the account of the terminal you type it in. To see all of them together, notch-limits puts one ring per account around the MacBook notch. Hover it and it expands into each account's five-hour session and weekly windows, with the time each one resets. With two or more Claude Code accounts, the one with the most headroom gets a "Best now" tag.</p>
+    <p>In most setups there is nothing to configure. At launch, and whenever you open Settings, notch-limits looks at the folders directly inside your home folder:</p>
+    <table>
+      <thead>
+        <tr><th scope="col">Account</th><th scope="col">Found when</th><th scope="col">Name it gets</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Your default Claude Code account</td><td><code>~/.claude.json</code> exists</td><td>Claude</td></tr>
+        <tr><td>Each extra Claude Code account</td><td>a folder named <code>.claude</code> plus a suffix, such as <code>~/.claude-work</code>, contains its own <code>.claude.json</code></td><td>Claude Work</td></tr>
+        <tr><td>Each Codex account</td><td><code>~/.codex</code>, or a folder such as <code>~/.codex-team</code>, contains an <code>auth.json</code></td><td>Codex, Codex Team</td></tr>
+      </tbody>
+    </table>
+    <p>So the <code>~/.claude-work</code> folder from step 1 shows up as "Claude Work" the next time the app starts or you open Settings. Discovery only checks that these files exist: it doesn't open them, read your shell configuration or touch the Keychain. Automatic discovery and the Settings window need notch-limits 1.1 or later.</p>
+
+    <h3 id="settings">Manage accounts in Settings</h3>
+    <p>Click the gear in the expanded notch, or in the menu bar panel on a Mac without a notch. Every account, found or configured, has a row where you can:</p>
+    <ul>
+      <li><strong>Show or hide it.</strong> The last visible account can't be hidden.</li>
+      <li><strong>Rename it,</strong> for example from "Claude" to "Claude Personal". Press Return or click elsewhere to apply.</li>
+      <li><strong>Pick its icon.</strong></li>
+      <li><strong>Move it up or down.</strong> The first half of the list sits left of the notch, the rest on the right.</li>
+    </ul>
+    <p>Changes apply immediately, with no restart and no network request, and are saved to <code>~/.config/notch-limits/accounts.json</code>.</p>
+
+    <h3 id="accounts-json">When you still need accounts.json</h3>
+    <p>Only for config folders that aren't directly in your home folder, or aren't named <code>.claude…</code> or <code>.codex…</code>. Add an entry for each one by hand. The easiest start is to change anything in Settings first: it writes every account to the file, and you add yours to that list.</p>
+<pre class="code"><span class="c">// ~/.config/notch-limits/accounts.json</span>
+[
+  { "name": "Claude Personal",
+    "provider": "claude", "path": "~/.claude" },
+  { "name": "Claude Work", "icon": "briefcase.fill",
+    "provider": "claude", "path": "~/.claude-work" },
+  { "name": "Claude Client", "icon": "building.2.fill",
+    "provider": "claude", "path": "~/clients/acme/claude" },
+  { "name": "Codex",
+    "provider": "codex", "path": "~/.codex" }
+]</pre>
+    <table>
+      <thead>
+        <tr><th scope="col">Field</th><th scope="col">What it is</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>The label in the expanded panel.</td></tr>
+        <tr><td><code>provider</code></td><td><code>claude</code> or <code>codex</code>.</td></tr>
+        <tr><td><code>path</code></td><td>For Claude, the account's <code>CLAUDE_CONFIG_DIR</code> (default <code>~/.claude</code>). For Codex, its <code>CODEX_HOME</code> (default <code>~/.codex</code>).</td></tr>
+        <tr><td><code>icon</code></td><td><code>claude</code>, <code>codex</code>, or any SF Symbol name, such as <code>leaf.fill</code> or <code>briefcase.fill</code>.</td></tr>
+        <tr><td><code>enabled</code></td><td>Optional. <code>false</code> hides the account. Settings writes it for you.</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>Use the same directory as the alias.</strong> <code>path</code> is the value your alias passes as <code>CLAUDE_CONFIG_DIR</code>.</li>
+      <li><strong>The file wins.</strong> Once <code>accounts.json</code> exists, it decides what is shown and in what order. Any found account that isn't in it is added hidden, so your setup stays as it was; turn it on in Settings.</li>
+      <li><strong>Your original is kept.</strong> Before Settings first overwrites a file you wrote or edited by hand, it copies it to <code>accounts.json.bak</code>. An existing backup is never replaced.</li>
+      <li><strong>Apply hand edits</strong> by restarting the app or clicking the gear: every click re-reads the file and your home folder.</li>
+    </ul>
+
+    <h3>What it reads for each account</h3>
+    <p>For each directory, notch-limits reads the usage snapshot Claude Code already keeps in that directory's <code>.claude.json</code> (for the default account, <code>~/.claude.json</code>). It reads the login from the Keychain entry Claude Code created for that directory, through <code>/usr/bin/security</code>, so there is no permission prompt. It only calls the usage endpoint when the snapshot is more than 10 minutes old, and it never refreshes, rewrites or uploads tokens.</p>
+    <p>Codex works the same way with <code>CODEX_HOME</code>: every <code>~/.codex…</code> folder with an <code>auth.json</code> is found on its own, and homes kept anywhere else go in <code>accounts.json</code> as <code>codex</code> entries.</p>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <ul>
+      <li><strong>"Credential not found in Keychain".</strong> That directory has no login yet, or a hand-written <code>path</code> doesn't match the alias. Run the alias once, sign in, and check the path. If it's an old folder you no longer use, hide it in Settings.</li>
+      <li><strong>"Token expired — open the CLI to renew it".</strong> Access tokens are short-lived and notch-limits never refreshes them, so it doesn't race your CLI. Run that account's alias once and it comes back on the next refresh.</li>
+      <li><strong>An account is missing.</strong> Open Settings: if you already had an <code>accounts.json</code>, a newly found account starts hidden there, so turn it on. If it isn't listed at all, check that the folder sits directly in your home folder, that its name starts with <code>.claude</code> or <code>.codex</code>, and that it contains <code>.claude.json</code> (Claude Code) or <code>auth.json</code> (Codex). Anything else needs an <code>accounts.json</code> entry. If that file isn't valid JSON, notch-limits ignores it and uses the accounts it finds.</li>
+    </ul>
+
+    <section class="get-card" aria-labelledby="get">
+      <h2 id="get">Get notch-limits</h2>
+      <p>Free, open source and native. No account of its own, no telemetry.</p>
+      <div class="cta">
+        <a class="btn btn--primary" href="https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5v9M5 8l4 4 4-4M3 15.5h12"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn--ghost" href="https://github.com/matheusm/notch-limits">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="cmd">
+        <code>curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash</code>
+        <button class="copy" type="button" aria-label="Copy install command" data-copy="curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.sh | bash">Copy</button>
+      </div>
+      <p class="fine">macOS 14+ · Apple Silicon &amp; Intel · 1.7 MB. The one-line install puts the app in ~/Applications with no Gatekeeper prompt. The DMG isn't notarized yet: on first launch, open System Settings → Privacy &amp; Security and click Open Anyway.</p>
+    </section>
+
+    <p class="next"><a href="/guides/check-claude-code-usage-limits-mac">Next: how to check Claude Code usage limits on a Mac →</a></p>
+
+    <h2 id="sources">Sources</h2>
+    <ul class="sources">
+      <li><a href="https://code.claude.com/docs/en/authentication#log-in-with-multiple-accounts">Claude Code docs: Log in with multiple accounts</a></li>
+      <li><a href="https://code.claude.com/docs/en/authentication#credential-management">Claude Code docs: Credential management</a></li>
+      <li><a href="https://code.claude.com/docs/en/env-vars">Claude Code docs: Environment variables (<code>CLAUDE_CONFIG_DIR</code>)</a></li>
+      <li><a href="https://code.claude.com/docs/en/commands">Claude Code docs: Commands (<code>/status</code>, <code>/usage</code>)</a></li>
+      <li><a href="https://github.com/matheusm/notch-limits#configuration">notch-limits README: Configuration</a></li>
+    </ul>
+    <p>notch-limits is an unofficial community project, not affiliated with or endorsed by Anthropic or OpenAI. Claude Code changes often; the linked docs are the source of truth.</p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><img src="/favicon.png" alt="" width="22" height="22">notch-limits · MIT License · <a href="https://github.com/matheusm/notch-limits">GitHub</a></span>
+    <span>Unofficial. Not affiliated with Anthropic or OpenAI.</span>
+    <nav class="guides" aria-label="Guides"><span>Guides</span><a href="/guides/check-claude-code-usage-limits-mac">Check Claude Code usage limits on a Mac</a><a href="/guides/multiple-claude-code-accounts" aria-current="page">Multiple Claude Code accounts</a></nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+  catch { btn.textContent = "Select & copy"; }
+  setTimeout(() => (btn.textContent = "Copy"), 1600);
+}));
+</script>
+</body>
+</html>

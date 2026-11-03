@@ -29,6 +29,17 @@ struct FormattingTests {
         #expect(resetText(at11.addingTimeInterval(-0.1), short: true) == text)
     }
 
+    /// R-08: a linha do ritmo usa o mesmo dia e hora do reset ("amanhã 11:00"), extraído em dayTimeText
+    @Test func paceLineUsesTheResetDayAndTimeFormat() throws {
+        let cal = Calendar.current
+        let tomorrow = try #require(cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: Date())))
+        let at11 = try #require(cal.date(bySettingHour: 11, minute: 0, second: 0, of: tomorrow))
+
+        #expect(dayTimeText(at11) == resetText(at11, short: true))
+        #expect(resetText(at11) == tr("resets \(dayTimeText(at11))", "reseta \(dayTimeText(at11))", "se reinicia \(dayTimeText(at11))"))
+        #expect(paceText(at11) == tr("At this pace: limit ", "Neste ritmo: limite ", "A este ritmo: límite ") + dayTimeText(at11))
+    }
+
     @Test(arguments: [
         (WindowKind.session(hours: 5), true, "5h"),
         (.weeklyModel("Fable"), false, "Fable"),

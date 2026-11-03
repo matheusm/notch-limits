@@ -127,6 +127,11 @@ private func claudePlan(_ creds: [String: Any]) -> String {
     return [creds["subscriptionType"] as? String, tier].compactMap { $0 }.joined(separator: " ")
 }
 
+/// Plano da conta lido do Keychain (nil sem credencial)
+func keychainPlan(configDir: String) -> String? {
+    (try? claudeCredentials(configDir: configDir)).map(claudePlan)
+}
+
 /// Converte a resposta de /api/oauth/usage (a mesma que o Claude Code guarda em cache)
 func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
     var windows: [LimitWindow] = []
@@ -150,16 +155,14 @@ func claudeWindows(_ json: [String: Any]) -> [LimitWindow] {
     return windows
 }
 
-/// Cache `cachedUsageUtilization` que o Claude Code grava no seu .claude.json ao consultar o uso
-func localClaude(configDir: String) -> Usage? {
-    // conta padrão usa ~/.claude.json; com CLAUDE_CONFIG_DIR o arquivo fica dentro do dir
-    let state = configDir == "\(home)/.claude" ? "\(home)/.claude.json" : "\(configDir)/.claude.json"
-    guard let cache = readJSON(state)?["cachedUsageUtilization"] as? [String: Any],
+/// Cache `cachedUsageUtilization` que o Claude Code grava no seu .claude.json ao consultar o uso;
+/// o plano vem do Keychain, injetável para os testes não tocarem o Keychain real
+func localClaude(configDir: String, plan: (String) -> String? = keychainPlan(configDir:)) -> Usage? {
+    guard let cache = readJSON(claudeStateFile(configDir: configDir, home: home))?["cachedUsageUtilization"] as? [String: Any],
           let ms = cache["fetchedAtMs"] as? Double,
           let json = cache["utilization"] as? [String: Any]
     else { return nil }
-    let plan = (try? claudeCredentials(configDir: configDir)).map(claudePlan)
-    return Usage(windows: claudeWindows(json), plan: plan, updatedAt: Date(timeIntervalSince1970: ms / 1000))
+    return Usage(windows: claudeWindows(json), plan: plan(configDir), updatedAt: Date(timeIntervalSince1970: ms / 1000))
 }
 
 private func fetchClaude(configDir: String) async throws -> Usage {

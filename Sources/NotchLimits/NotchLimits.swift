@@ -1,64 +1,6 @@
 import SwiftUI
 import ServiceManagement
 
-// MARK: - Contas
-// Lidas de ~/.config/notch-limits/accounts.json; sem o arquivo, usa ~/.claude e ~/.codex
-
-enum Provider {
-    case claude(configDir: String)   // dir passado em CLAUDE_CONFIG_DIR (~/.claude = conta padrão)
-    case codex(home: String)         // CODEX_HOME (~/.codex)
-}
-
-struct Account: Identifiable {
-    let id: String
-    let name: String
-    let glyph: Glyph                 // ícone no meio do anel
-    let provider: Provider
-}
-
-struct AccountConfig: Decodable {
-    let name: String
-    let provider: String             // "claude" | "codex"
-    var path: String?                // claude: CLAUDE_CONFIG_DIR (padrão ~/.claude) · codex: CODEX_HOME (padrão ~/.codex)
-    var icon: String?                // "claude", "codex" ou nome de um SF Symbol
-}
-
-let home = FileManager.default.homeDirectoryForCurrentUser.path
-let configFile = "\(home)/.config/notch-limits/accounts.json"
-
-let accounts: [Account] = loadAccounts(from: configFile)
-
-private func expand(_ path: String) -> String {
-    var expanded = (path as NSString).expandingTildeInPath
-    while expanded.count > 1 && expanded.hasSuffix("/") { expanded.removeLast() }
-    return expanded
-}
-
-func loadAccounts(from file: String) -> [Account] {
-    var configs = [AccountConfig(name: "Claude", provider: "claude"), AccountConfig(name: "Codex", provider: "codex")]
-    if let data = FileManager.default.contents(atPath: file),
-       let parsed = try? JSONDecoder().decode([AccountConfig].self, from: data), !parsed.isEmpty {
-        configs = parsed
-    }
-    return configs.enumerated().compactMap { index, config in
-        let glyph: Glyph = switch config.icon ?? config.provider {
-        case "claude": .claude
-        case "codex": .codex
-        case let symbol: .symbol(symbol)
-        }
-        switch config.provider {
-        case "claude":
-            let dir = expand(config.path ?? "~/.claude")
-            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .claude(configDir: dir))
-        case "codex":
-            let dir = expand(config.path ?? "~/.codex")
-            return Account(id: "\(index)", name: config.name, glyph: glyph, provider: .codex(home: dir))
-        default:
-            return nil
-        }
-    }
-}
-
 // MARK: - Modelo
 
 enum WindowKind: Hashable {
@@ -107,7 +49,12 @@ struct Usage {
     var peak: Double? { windows.map(\.percent).max() }
 
     /// Dado com mais de 15 min fica destacado na UI
-    var isStale: Bool { updatedAt.map { Date().timeIntervalSince($0) > 900 } ?? true }
+    var isStale: Bool { isStale(at: Date()) }
+
+    func isStale(at now: Date) -> Bool { updatedAt.map { now.timeIntervalSince($0) > 900 } ?? true }
+
+    /// Dado que a UI mostra sem aviso: tem janelas e no máximo 15 min (os alertas só olham esse dado)
+    func isUsable(at now: Date) -> Bool { !windows.isEmpty && !isStale(at: now) }
 
     /// Mostra o erro só quando não há dado útil para exibir no lugar
     var visibleError: String? { windows.isEmpty || isStale ? error : nil }
@@ -134,24 +81,29 @@ func ageText(_ date: Date?) -> String {
 
 @MainActor
 final class Store: ObservableObject {
-    static let shared = Store()
+    static let shared = Store(onRefresh: LimitNotifier.shared.update)
 
-    @Published var usage: [String: Usage] = [:]
+    @Published private(set) var accounts: [Account]   // só as visíveis, na ordem dos Ajustes
+    @Published var usage: [String: Usage] = [:]          // por Account.id (provider:path)
     @Published var loading = false
     private var blockedUntil: [String: Date] = [:]   // backoff por conta após 429
+    private var localPending = false                 // releitura local pedida durante outra atualização
 
-    private let accounts: [Account]
     private let local: (Account) -> Usage?
     private let remote: (Account) async throws -> Usage
+    private let onRefresh: @MainActor ([Account], [String: Usage]) -> Void
 
-    /// Fontes injetáveis para teste; o app usa as contas do accounts.json e os leitores reais
-    init(accounts: [Account] = NotchLimits.accounts,
+    /// Fontes injetáveis para teste; o app usa as contas encontradas na home e do accounts.json e os leitores reais.
+    /// onRefresh recebe o uso final uma vez ao fim de cada atualização (o app passa o notificador, R-06)
+    init(accounts: [Account] = loadAccounts(from: configFile, home: home),
          local: @escaping (Account) -> Usage? = localUsage,
          remote: @escaping (Account) async throws -> Usage = remoteUsage,
+         onRefresh: @escaping @MainActor ([Account], [String: Usage]) -> Void = { _, _ in },
          autoRefresh: Bool = true) {
-        self.accounts = accounts
+        self.accounts = accounts.filter(\.enabled)
         self.local = local
         self.remote = remote
+        self.onRefresh = onRefresh
         guard autoRefresh else { return }
         // a cada minuto relê os arquivos locais; a API só é chamada quando o dado local passa de 10 min
         Task {
@@ -165,43 +117,73 @@ final class Store: ObservableObject {
     /// network: false só relê os arquivos locais (usado ao abrir o notch/menu, sem nenhuma requisição)
     /// force: consulta a API mesmo com dado fresco (botão de atualizar), respeitando o backoff
     func refresh(network: Bool = true, force: Bool = false) async {
-        guard !loading else { return }
+        guard !loading else {
+            if !network { localPending = true }   // roda quando a atual terminar (ex.: conta nova nos Ajustes)
+            return
+        }
         loading = true
         let now = Date()
         let current = usage
         let blocked = blockedUntil
         let local = local, remote = remote
 
-        await withTaskGroup(of: (id: String, usage: Usage?, error: Error?, calledAPI: Bool).self) { group in
+        await withTaskGroup(of: Outcome.self) { group in
             for acc in accounts {
                 let previous = current[acc.id]
                 let canCall = network && (blocked[acc.id] ?? .distantPast) <= now
                 group.addTask {
                     let best = Usage.newest(previous, local(acc))
                     let fresh = best?.updatedAt.map { now.timeIntervalSince($0) < staleAfter } ?? false
-                    guard canCall, force || !fresh else { return (acc.id, best, nil, false) }
+                    guard canCall, force || !fresh else { return Outcome(id: acc.id, usage: best, error: nil, calledAPI: false) }
                     do {
-                        return (acc.id, try await remote(acc), nil, true)
+                        return Outcome(id: acc.id, usage: try await remote(acc), error: nil, calledAPI: true)
                     } catch {
-                        return (acc.id, best, error, true)
+                        return Outcome(id: acc.id, usage: best, error: error, calledAPI: true)
                     }
                 }
             }
-            for await result in group {
-                var updated = result.usage ?? Usage()
-                if updated.plan == nil { updated.plan = current[result.id]?.plan }
-                if result.calledAPI {
-                    updated.error = result.error?.localizedDescription
-                    if let wait = (result.error as? UsageError)?.retryAfter {
-                        blockedUntil[result.id] = Date().addingTimeInterval(wait)
-                    }
-                } else {
-                    updated.error = current[result.id]?.error   // sem nova tentativa, mantém o último erro conhecido
-                }
-                usage[result.id] = updated
+            for await outcome in group {
+                record(outcome, previous: current[outcome.id])
             }
         }
         loading = false
+        onRefresh(accounts, usage)
+        if localPending {
+            localPending = false
+            await refresh(network: false)
+        }
+    }
+
+    /// Resultado de uma conta numa atualização
+    private struct Outcome {
+        let id: String
+        let usage: Usage?
+        let error: Error?
+        let calledAPI: Bool
+    }
+
+    /// O Retry-After vale mesmo se a conta foi escondida durante a chamada (D-005);
+    /// o uso só é gravado se a conta ainda está na lista
+    private func record(_ outcome: Outcome, previous: Usage?) {
+        if outcome.calledAPI, let wait = (outcome.error as? UsageError)?.retryAfter {
+            blockedUntil[outcome.id] = Date().addingTimeInterval(wait)
+        }
+        guard accounts.contains(where: { $0.id == outcome.id }) else { return }
+        var updated = outcome.usage ?? Usage()
+        if updated.plan == nil { updated.plan = previous?.plan }
+        // sem nova tentativa, mantém o último erro conhecido
+        updated.error = outcome.calledAPI ? outcome.error?.localizedDescription : previous?.error
+        usage[outcome.id] = updated
+    }
+
+    /// Troca a lista na hora (Ajustes) e só relê os arquivos locais, sem nenhuma requisição (D-002).
+    /// O uso de contas que saíram é descartado; o backoff fica, para esconder e mostrar não furar o Retry-After (D-005)
+    @discardableResult
+    func setAccounts(_ list: [Account]) -> Task<Void, Never> {
+        accounts = list.filter(\.enabled)
+        let ids = Set(accounts.map(\.id))
+        usage = usage.filter { ids.contains($0.key) }
+        return Task { await refresh(network: false) }
     }
 
     /// Um anel por conta, preenchido com o maior uso entre as janelas de limite
@@ -221,9 +203,13 @@ func setLaunchAtLogin(_ enabled: Bool) {
     }
 }
 
-/// Cor só para alerta (≥70% laranja, ≥90% vermelho); abaixo disso fica neutro
+/// Níveis de alerta: laranja a partir de 70%; vermelho e notificação (R-06) a partir de 90%
+let warningLevel: Double = 70
+let nearLimitLevel: Double = 90
+
+/// Cor só para alerta; abaixo de warningLevel fica neutro
 func alertColor(for pct: Double) -> Color? {
-    pct >= 90 ? .red : pct >= 70 ? .orange : nil
+    pct >= nearLimitLevel ? Theme.critical : pct >= warningLevel ? Theme.warning : nil
 }
 
 /// Janela de sessão mostra contagem regressiva; as semanais mostram dia e hora do reset
@@ -238,6 +224,12 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
             ? tr("in \(left)", "em \(left)", "en \(left)")
             : tr("resets in \(left)", "reseta em \(left)", "se reinicia en \(left)")
     }
+    let when = dayTimeText(date)
+    return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
+}
+
+/// "hoje 16:20", "amanhã 09:00", "ter 14:00" (12h/24h conforme o idioma); usado no reset e no ritmo (R-08)
+func dayTimeText(_ date: Date) -> String {
     // arredonda pro minuto mais próximo (a API manda 00:59:59.9 para resets "às 01:00")
     let rounded = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)
     let calendar = Calendar.current
@@ -247,92 +239,7 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
     let day = calendar.isDateInToday(rounded) ? tr("today", "hoje", "hoy")
         : calendar.isDateInTomorrow(rounded) ? tr("tomorrow", "amanhã", "mañana") : formatter.string(from: rounded)
     formatter.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
-    let when = "\(day) \(formatter.string(from: rounded))"
-    return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
-}
-
-struct AccountView: View {
-    let account: Account
-    let usage: Usage?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(account.name).font(.headline)
-                if let plan = usage?.plan, !plan.isEmpty {
-                    Text(plan).font(.caption2).padding(.horizontal, 5).padding(.vertical, 1)
-                        .background(.quaternary, in: Capsule())
-                }
-                Spacer()
-            }
-            if let at = usage?.updatedAt {
-                TimelineView(.periodic(from: .now, by: 30)) { _ in
-                    Text(ageText(at)).font(.caption2).foregroundStyle(usage?.isStale == true ? .orange : .secondary)
-                }
-            }
-            if let err = usage?.visibleError {
-                Label(err, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
-            }
-            if let windows = usage?.windows, !windows.isEmpty {
-                ForEach(windows) { limit in
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack {
-                            Text(limit.label).font(.caption)
-                            Spacer()
-                            Text("\(Int(limit.percent.rounded()))%").font(.caption.monospacedDigit().bold())
-                                .foregroundStyle(alertColor(for: limit.percent) ?? .primary)
-                        }
-                        ProgressView(value: min(limit.percent, 100), total: 100).tint(alertColor(for: limit.percent) ?? .gray)
-                        Text(resetText(limit.resetsAt, countdown: limit.isSession)).font(.caption2).foregroundStyle(.secondary)
-                    }
-                }
-            } else if usage == nil {
-                ProgressView().controlSize(.small)
-            }
-        }
-    }
-}
-
-struct ContentView: View {
-    @ObservedObject var store: Store
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @AppStorage("showNotch") private var showNotch = true
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(accounts) { acc in
-                AccountView(account: acc, usage: store.usage[acc.id])
-                if acc.id != accounts.last?.id { Divider() }
-            }
-            Divider()
-            HStack {
-                Spacer()
-                Button {
-                    Task { await store.refresh(force: true) }
-                } label: {
-                    if store.loading {
-                        ProgressView().controlSize(.mini)
-                    } else {
-                        Image(systemName: "arrow.clockwise").accessibilityLabel(tr("Refresh", "Atualizar", "Actualizar"))
-                    }
-                }
-                .buttonStyle(.borderless)
-                .help(tr("Refresh", "Atualizar", "Actualizar"))
-            }
-            HStack {
-                Toggle(tr("Launch at login", "Abrir no login", "Abrir al iniciar sesión"), isOn: $launchAtLogin)
-                    .toggleStyle(.checkbox).font(.caption)
-                    .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
-                Toggle("Notch", isOn: $showNotch)
-                    .toggleStyle(.checkbox).font(.caption)
-                Spacer()
-                Button(tr("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
-            }
-        }
-        .padding(14)
-        .frame(width: 290)
-        .onAppear { Task { await store.refresh(network: false) } }
-    }
+    return "\(day) \(formatter.string(from: rounded))"
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
