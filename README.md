@@ -58,7 +58,7 @@ curl -fsSL https://raw.githubusercontent.com/matheusm/notch-limits/main/install.
 
 **Or download the app:** grab [`NotchLimits.dmg`](https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.dmg) (or the [`.zip`](https://github.com/matheusm/notch-limits/releases/latest/download/NotchLimits.zip)), open it and drag Notch Limits to Applications. The app is not notarized yet, so on first launch open **System Settings → Privacy & Security → Open Anyway**.
 
-Universal binary (Apple Silicon + Intel), about 1.7 MB.
+Universal binary (Apple Silicon + Intel): a 1.6 MB zip or a 2.9 MB DMG.
 
 ### Build from source
 
