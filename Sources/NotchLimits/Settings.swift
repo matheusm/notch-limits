@@ -140,155 +140,6 @@ final class NotificationSettings: ObservableObject {
     }
 }
 
-struct SettingsView: View {
-    @ObservedObject var model: AccountSettings
-    @ObservedObject var notifications: NotificationSettings
-
-    var body: some View {
-        Form {
-            Section {
-                ForEach(model.list) { account in
-                    AccountSettingsRow(
-                        account: account,
-                        model: model,
-                        isFirst: account.id == model.list.first?.id,
-                        isLast: account.id == model.list.last?.id
-                    )
-                }
-            } header: {
-                Text(tr("Accounts", "Contas", "Cuentas"))
-            } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    if let error = model.saveError {
-                        Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                    }
-                    Text(tr(
-                        "Accounts in ~/.claude* and ~/.codex* are found automatically. Changes are saved to "
-                            + "~/.config/notch-limits/accounts.json; add folders kept elsewhere there by hand.",
-                        "Contas em ~/.claude* e ~/.codex* são encontradas automaticamente. As mudanças são salvas em "
-                            + "~/.config/notch-limits/accounts.json; adicione lá, à mão, pastas que ficam em outro lugar.",
-                        "Las cuentas en ~/.claude* y ~/.codex* se detectan automáticamente. Los cambios se guardan en "
-                            + "~/.config/notch-limits/accounts.json; agrega allí a mano las carpetas que estén en otro lugar."
-                    ))
-                    .foregroundStyle(.secondary)
-                }
-                .font(.caption)
-                .fixedSize(horizontal: false, vertical: true)
-            }
-            notificationsSection
-        }
-        .formStyle(.grouped)
-        .frame(minWidth: 500, minHeight: 300)
-    }
-}
-
-extension SettingsView {
-    private var notificationsSection: some View {
-        Section {
-            Toggle(
-                tr(
-                    "Notify at 90% and when a limit resets",
-                    "Avisar em 90% e quando um limite resetar",
-                    "Avisar al 90% y cuando un límite se reinicie"
-                ),
-                isOn: Binding(get: { notifications.isOn }, set: { on in Task { await notifications.setOn(on) } })
-            )
-        } header: {
-            Text(tr("Notifications", "Notificações", "Notificaciones"))
-        } footer: {
-            if notifications.denied {
-                Text(tr(
-                    "Notifications for Notch Limits are off in System Settings → Notifications.",
-                    "As notificações do Notch Limits estão desativadas em Ajustes do Sistema → Notificações.",
-                    "Las notificaciones de Notch Limits están desactivadas en Ajustes del Sistema → Notificaciones."
-                ))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-}
-
-private struct AccountSettingsRow: View {
-    let account: Account
-    @ObservedObject var model: AccountSettings
-    let isFirst: Bool
-    let isLast: Bool
-    @State private var draft = ""
-    @FocusState private var editing: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Toggle(isOn: Binding(get: { account.enabled }, set: { model.setEnabled($0, id: account.id) })) {
-                Text(tr("Show \(account.name)", "Mostrar \(account.name)", "Mostrar \(account.name)"))
-            }
-            .toggleStyle(.checkbox)
-            .labelsHidden()
-            .disabled(model.isLastShown(account.id))
-
-            RingIcon(percent: 0, glyph: account.glyph, tint: .primary, size: 18)
-                .accessibilityHidden(true)   // decorativo: o menu ao lado diz qual é o ícone
-            iconMenu
-
-            VStack(alignment: .leading, spacing: 2) {
-                TextField(tr("Name", "Nome", "Nombre"), text: $draft, prompt: Text(tr("Name", "Nome", "Nombre")))
-                    .labelsHidden()
-                    .focused($editing)
-                    .onSubmit(commitName)
-                    .onChange(of: editing) { _, focused in if !focused { commitName() } }
-                    .onChange(of: account.name) { _, name in draft = name }
-                    .onAppear { draft = account.name }
-                Text("\(account.provider.title) · \(abbreviate(account.provider.path, home: model.home))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            .frame(maxWidth: 240)
-
-            Spacer(minLength: 0)
-            moveButton("chevron.up", label: tr("Move up", "Mover para cima", "Subir"), offset: -1).disabled(isFirst)
-            moveButton("chevron.down", label: tr("Move down", "Mover para baixo", "Bajar"), offset: 1).disabled(isLast)
-        }
-    }
-
-    private var iconMenu: some View {
-        let known = ["claude", "codex"] + extraIcons.map(\.symbol)
-        return Picker(selection: Binding(get: { account.glyph.name }, set: { model.setIcon($0, id: account.id) })) {
-            Text("Claude").tag("claude")
-            Text("Codex").tag("codex")
-            ForEach(extraIcons, id: \.symbol) { icon in
-                Label(icon.label, systemImage: icon.symbol).tag(icon.symbol)
-            }
-            // ícone próprio vindo do arquivo: aparece com o nome cru do símbolo
-            if !known.contains(account.glyph.name) {
-                Text(account.glyph.name).tag(account.glyph.name)
-            }
-        } label: {
-            Text(tr("Icon", "Ícone", "Icono"))
-        }
-        .labelsHidden()
-        .fixedSize()
-    }
-
-    /// Volta ao nome salvo quando o campo fica vazio
-    private func commitName() {
-        model.rename(draft, id: account.id)
-        draft = model.list.first { $0.id == account.id }?.name ?? draft
-    }
-
-    private func moveButton(_ symbol: String, label: String, offset: Int) -> some View {
-        Button {
-            model.move(id: account.id, by: offset)
-        } label: {
-            Image(systemName: symbol).accessibilityLabel(label)
-        }
-        .buttonStyle(.borderless)
-        .help(label)
-    }
-}
-
 /// Janela do AppKit: o painel do notch é um NSHostingView fora das cenas do SwiftUI, onde openWindow e SettingsLink falham
 @MainActor
 final class SettingsWindow {
@@ -301,26 +152,44 @@ final class SettingsWindow {
     /// Um nome sendo digitado não se perde: a linha só troca o rascunho quando o nome salvo daquela conta muda
     func show(store: Store) {
         let window = window ?? makeWindow(store: store)
+        let opening = !window.isVisible
         model?.reload()
         if let notifications { Task { await notifications.reload() } }
         NSApp.activate(ignoringOtherApps: true)    // app LSUIElement: sem isso a janela abre atrás das outras
         window.makeKeyAndOrderFront(nil)
+        // ao abrir, nenhum nome fica em edição; com a janela já aberta o foco fica onde está, para não perder um rascunho
+        if opening { window.makeFirstResponder(nil) }
     }
 
     private func makeWindow(store: Store) -> NSWindow {
         let model = AccountSettings { list in store.setAccounts(list) }
         let notifications = NotificationSettings()
-        let view = SettingsView(model: model, notifications: notifications)
-        let window = NSWindow(contentViewController: NSHostingController(rootView: view))
-        window.title = tr("Notch Limits Settings", "Ajustes do Notch Limits", "Ajustes de Notch Limits")
-        window.styleMask = [.titled, .closable, .resizable]
-        window.isReleasedWhenClosed = false
-        window.contentMinSize = NSSize(width: 500, height: 300)
-        window.setContentSize(NSSize(width: 540, height: 420))
+        // a lista rola só se passar da tela; desconta a barra de título e uma folga
+        let maxHeight = (NSScreen.main?.visibleFrame.height ?? 800) - 80
+        let window = Self.makeWindow(SettingsView(model: model, notifications: notifications, maxHeight: maxHeight))
         window.center()
         self.model = model
         self.notifications = notifications
         self.window = window
+        return window
+    }
+
+    /// A mesma janela que o app abre; os snapshots renderizam esta (D-023).
+    /// Preta como o painel: barra de título transparente sobre o fundo preto e sem título (os botões de janela ficam,
+    /// Cmd+W fecha); o tamanho segue o conteúdo, sem redimensionar. Sem fullSizeContentView: o conteúdo já fica abaixo
+    /// dos botões, e com ele o cacheDisplay dos snapshots não desenha o SwiftUI
+    static func makeWindow(_ view: SettingsView) -> NSWindow {
+        let host = NSHostingController(rootView: view)
+        let window = NSWindow(contentViewController: host)
+        window.title = tr("Notch Limits Settings", "Ajustes do Notch Limits", "Ajustes de Notch Limits")   // VoiceOver, Mission Control
+        window.styleMask = [.titled, .closable]
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.backgroundColor = .black
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.isReleasedWhenClosed = false
+        window.setContentSize(host.view.fittingSize)   // nasce 1×0; sem isso o center() centraliza um ponto
         return window
     }
 }

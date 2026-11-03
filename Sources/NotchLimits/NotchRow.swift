@@ -13,44 +13,38 @@ struct NotchAccountRow: View {
                 percent: usage?.peak,
                 glyph: account.glyph,
                 tint: .white,
-                progressTint: usage?.peak.flatMap(alertColor(for:)) ?? ringGray,
+                progressTint: usage?.peak.flatMap(alertColor(for:)) ?? Theme.ring,
                 size: 34
             )
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(account.name).font(.system(size: 13, weight: .semibold))
+                    Text(account.name).font(Theme.title)
                     if let plan = usage?.plan, !plan.isEmpty {
-                        Text(plan.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
-                            .foregroundStyle(dim)
+                        Tag(plan)
                     }
                     if isBest {
                         // estado, não plano: visual do chip selecionado, sem cor nova (cor só para alerta, D-016)
-                        Text(bestNowLabel.uppercased()).font(.system(size: 9, weight: .semibold)).tracking(0.5)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.white.opacity(0.14), in: Capsule())
-                            .help(bestNowHelp(account.provider))
+                        Tag(bestNowLabel, filled: true).help(bestNowHelp(account.provider))
                     }
                     Spacer()
                     if let peak = usage?.peak {
                         Text("\(Int(peak.rounded()))%")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded).monospacedDigit())
+                            .font(Theme.figure)
                             .foregroundStyle(alertColor(for: peak) ?? .white)
                     }
                 }
 
                 if let at = usage?.updatedAt {
                     TimelineView(.periodic(from: .now, by: 30)) { _ in
-                        Text(ageText(at)).font(.system(size: 10))
-                            .foregroundStyle(usage?.isStale == true ? .orange : dim)
+                        Text(ageText(at)).font(Theme.caption)
+                            .foregroundStyle(usage?.isStale == true ? Theme.warning : Theme.dim)
                     }
                     .padding(.top, -4)
                 }
 
                 if let err = usage?.visibleError {
-                    Label(err, systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 10)).foregroundStyle(.orange)
+                    WarningLine(err)
                 }
 
                 if let usage, !usage.windows.isEmpty {
@@ -73,20 +67,20 @@ extension NotchAccountRow {
                 let windowPace = pace(of: limit, in: usage, now: now)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 10) {
-                        Text(limit.shortLabel).font(.system(size: 11)).foregroundStyle(dim)
+                        Text(limit.shortLabel).font(Theme.body).foregroundStyle(Theme.dim)
                             .frame(width: 46, alignment: .leading)
                         UsageBar(percent: limit.percent, expected: windowPace?.expected)
                         Text("\(Int(limit.percent.rounded()))%")
-                            .font(.system(size: 11, weight: .medium).monospacedDigit())
+                            .font(Theme.body.weight(.medium).monospacedDigit())
                             .frame(width: 32, alignment: .trailing)
                         Text(resetText(limit.resetsAt, short: true, countdown: limit.isSession))
-                            .font(.system(size: 10).monospacedDigit()).foregroundStyle(dim)
+                            .font(Theme.caption.monospacedDigit()).foregroundStyle(Theme.dim)
                             .frame(width: 96, alignment: .trailing)
                     }
                     if let limitAt = windowPace?.limitAt {
                         // a cor que a janela já tem: as palavras são o sinal, nunca uma cor nova (D-017)
-                        Text(paceText(limitAt)).font(.system(size: 10))
-                            .foregroundStyle(alertColor(for: limit.percent) ?? dim)
+                        Text(paceText(limitAt)).font(Theme.caption)
+                            .foregroundStyle(alertColor(for: limit.percent) ?? Theme.dim)
                             .padding(.leading, 56)   // alinhada à borda da barra: rótulo de 46 + espaço de 10
                     }
                 }
@@ -102,8 +96,8 @@ private struct UsageBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.1))
-                Capsule().fill(alertColor(for: percent) ?? ringGray)
+                Capsule().fill(Theme.track)
+                Capsule().fill(alertColor(for: percent) ?? Theme.ring)
                     .frame(width: max(geo.size.width * min(percent, 100) / 100, percent > 0 ? 4 : 0))
             }
             .overlay(alignment: .leading) {

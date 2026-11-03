@@ -209,7 +209,7 @@ let nearLimitLevel: Double = 90
 
 /// Cor só para alerta; abaixo de warningLevel fica neutro
 func alertColor(for pct: Double) -> Color? {
-    pct >= nearLimitLevel ? .red : pct >= warningLevel ? .orange : nil
+    pct >= nearLimitLevel ? Theme.critical : pct >= warningLevel ? Theme.warning : nil
 }
 
 /// Janela de sessão mostra contagem regressiva; as semanais mostram dia e hora do reset
@@ -240,109 +240,6 @@ func dayTimeText(_ date: Date) -> String {
         : calendar.isDateInTomorrow(rounded) ? tr("tomorrow", "amanhã", "mañana") : formatter.string(from: rounded)
     formatter.setLocalizedDateFormatFromTemplate("jmm")   // respeita 12h/24h do idioma
     return "\(day) \(formatter.string(from: rounded))"
-}
-
-struct AccountView: View {
-    let account: Account
-    let usage: Usage?
-    let isBest: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(account.name).font(.headline)
-                if let plan = usage?.plan, !plan.isEmpty {
-                    Text(plan).font(.caption2).padding(.horizontal, 5).padding(.vertical, 1)
-                        .background(.quaternary, in: Capsule())
-                }
-                if isBest {
-                    Text(bestNowLabel).font(.caption2.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
-                        .background(.quaternary, in: Capsule())
-                        .help(bestNowHelp(account.provider))
-                }
-                Spacer()
-            }
-            if let at = usage?.updatedAt {
-                TimelineView(.periodic(from: .now, by: 30)) { _ in
-                    Text(ageText(at)).font(.caption2).foregroundStyle(usage?.isStale == true ? .orange : .secondary)
-                }
-            }
-            if let err = usage?.visibleError {
-                Label(err, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
-            }
-            if let usage, !usage.windows.isEmpty {
-                let now = Date()
-                ForEach(usage.windows) { limit in
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack {
-                            Text(limit.label).font(.caption)
-                            Spacer()
-                            Text("\(Int(limit.percent.rounded()))%").font(.caption.monospacedDigit().bold())
-                                .foregroundStyle(alertColor(for: limit.percent) ?? .primary)
-                        }
-                        ProgressView(value: min(limit.percent, 100), total: 100).tint(alertColor(for: limit.percent) ?? .gray)
-                        Text(resetText(limit.resetsAt, countdown: limit.isSession)).font(.caption2).foregroundStyle(.secondary)
-                        // ritmo (R-08): só a linha, na cor que a janela já tem; a barra do sistema fica sem traço
-                        if let limitAt = pace(of: limit, in: usage, now: now)?.limitAt {
-                            Text(paceText(limitAt)).font(.caption2).foregroundStyle(alertColor(for: limit.percent) ?? .secondary)
-                        }
-                    }
-                }
-            } else if usage == nil {
-                ProgressView().controlSize(.small)
-            }
-        }
-    }
-}
-
-struct ContentView: View {
-    @ObservedObject var store: Store
-    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @AppStorage("showNotch") private var showNotch = true
-
-    var body: some View {
-        let best = bestAccountIDs(accounts: store.accounts, usage: store.usage, now: Date())
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(store.accounts) { acc in
-                AccountView(account: acc, usage: store.usage[acc.id], isBest: best.contains(acc.id))
-                if acc.id != store.accounts.last?.id { Divider() }
-            }
-            Divider()
-            HStack {
-                Spacer()
-                Button {
-                    SettingsWindow.shared.show(store: store)
-                } label: {
-                    Image(systemName: "gearshape").accessibilityLabel(tr("Settings", "Ajustes", "Ajustes"))
-                }
-                .buttonStyle(.borderless)
-                .help(tr("Settings", "Ajustes", "Ajustes"))
-                Button {
-                    Task { await store.refresh(force: true) }
-                } label: {
-                    if store.loading {
-                        ProgressView().controlSize(.mini)
-                    } else {
-                        Image(systemName: "arrow.clockwise").accessibilityLabel(tr("Refresh", "Atualizar", "Actualizar"))
-                    }
-                }
-                .buttonStyle(.borderless)
-                .help(tr("Refresh", "Atualizar", "Actualizar"))
-            }
-            HStack {
-                Toggle(tr("Launch at login", "Abrir no login", "Abrir al iniciar sesión"), isOn: $launchAtLogin)
-                    .toggleStyle(.checkbox).font(.caption)
-                    .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
-                Toggle("Notch", isOn: $showNotch)
-                    .toggleStyle(.checkbox).font(.caption)
-                Spacer()
-                Button(tr("Quit", "Sair", "Salir")) { NSApp.terminate(nil) }.buttonStyle(.borderless).font(.caption)
-            }
-        }
-        .padding(14)
-        .frame(width: 290)
-        .onAppear { Task { await store.refresh(network: false) } }
-    }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {

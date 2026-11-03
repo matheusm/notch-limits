@@ -28,12 +28,12 @@ If you juggle **multiple Claude Code accounts** (for example personal Max and a 
 ## Features
 
 - **Notch HUD:** progress rings attached to the notch that expand on hover, like a Dynamic Island for your AI quotas.
-- **Menu bar fallback:** the menu bar icon appears automatically when no screen has a notch (for example clamshell mode with an external monitor) or when notch mode is off.
+- **Menu bar fallback:** the menu bar icon appears automatically when no screen has a notch (for example clamshell mode with an external monitor) or when notch mode is off. Clicking it opens the same black panel as the expanded notch, in light mode too.
 - **Claude Code limits:** session (5h), weekly (all models) and weekly per-model limits (e.g. Opus/Fable), with exact reset times.
 - **Codex limits:** primary and secondary rate-limit windows for ChatGPT plans (Plus, Pro, Team…).
 - **Multiple accounts:** any number of Claude Code config dirs plus Codex homes, found automatically in `~/.claude*` and `~/.codex*` and managed in a Settings window.
 - **Colors only when needed:** neutral gray rings, orange at 70% and red at 90%.
-- **Pace projection:** each bar in the notch panel has a subtle tick where usage would be if spread evenly over the window, and "At this pace: limit today 16:20" appears under any window you are on track to hit before it resets. It is a linear projection from the current snapshot, with no stored history, and only shows once 15% of the window has passed.
+- **Pace projection:** each bar in the notch panel (and the menu bar panel) has a subtle tick where usage would be if spread evenly over the window, and "At this pace: limit today 16:20" appears under any window you are on track to hit before it resets. It is a linear projection from the current snapshot, with no stored history, and only shows once 15% of the window has passed.
 - **Best account now:** with two or more accounts of the same provider, the expanded panel tags the one with the most headroom "Best now".
 - **Optional notifications:** a heads-up when a limit reaches 90%, and another when a limit you hit resets ("Claude Work is available again"). Off by default; turn them on in Settings.
 - **Read-only and local:** it reuses the credentials your CLIs already store. It never refreshes, rewrites or uploads tokens anywhere other than the official usage endpoint.
@@ -97,16 +97,18 @@ Discovery only checks that these files exist. It does not read them, your shell 
 
 ### Settings
 
-Open Settings with the gear button in the expanded notch or in the menu bar panel. Every account, found or configured, has a row where you can:
+Open Settings with the gear button in the expanded notch or in the menu bar panel. The window uses the same black look as the notch panel. Clicking the gear in the notch collapses the notch so it never covers the window; it expands again once you move the pointer away from the notch and back.
 
-- show or hide it (the last visible account cannot be hidden),
-- pick its icon,
-- rename it (press Return or click elsewhere to apply; an empty name keeps the previous one),
+Every account, found or configured, has a row where you can:
+
+- show or hide it with its **Shown** / **Hidden** chip (the last visible account cannot be hidden),
+- pick its icon by clicking the icon at the start of the row,
+- rename it (click the name, then press Return or click elsewhere to apply; an empty name keeps the previous one),
 - move it up or down.
 
 Changes apply immediately, without a restart and without any network request, and are saved to `~/.config/notch-limits/accounts.json`.
 
-The **Notifications** section has a single toggle, off by default: **Notify at 90% and when a limit resets**. Turning it on asks macOS for permission; if you deny it, the toggle turns back off. If macOS has no answer on record when you open Settings (for example after notification permissions were reset), the toggle shows off; turning it on asks again. Once it is on you get, per account:
+The **Notifications** section has a single toggle (a chip), off by default: **Notify at 90% and when a limit resets**. Turning it on asks macOS for permission; if you deny it, the toggle turns back off. If macOS has no answer on record when you open Settings (for example after notification permissions were reset), the toggle shows off; turning it on asks again. Once it is on you get, per account:
 
 - **"… is close to its limit"** when a limit window reaches 90%, once per window period (going back under 90% and over it again before the reset does not repeat it);
 - **"… is available again"** when a window that was at 90% or more resets and no other window of that account is still at 90% or more. It arrives within about a minute of the reset time, without waiting for the API.
