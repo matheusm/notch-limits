@@ -185,6 +185,7 @@ These are the same endpoints that Claude Code's `/usage` and Codex's `/status` u
 
 - **"Token expired — open the CLI to renew it":** access tokens are short-lived, and notch-limits never refreshes them on purpose, to avoid racing your CLI. Run `claude` (or `claude-work`, `codex`…) once and the account comes back on the next refresh.
 - **"API rate limited — retrying in N min":** the usage endpoint only allows a few requests per minute (shared with Claude Code's `/usage`). The app honors the `Retry-After` header, keeps showing the last good data and retries automatically.
+- **A Codex account doesn't show up:** notch-limits reads the login Codex keeps in `auth.json` in its home folder (`~/.codex` by default), which is where Codex stores it unless you changed `cli_auth_credentials_store`. With `keyring` or `auto` in `~/.codex/config.toml`, Codex keeps the login in the system credential store instead, and notch-limits can't see it.
 - **Nothing next to the notch:** check that the built-in display is active. In clamshell mode the app automatically switches to the menu bar.
 - **No notifications:** check that the toggle is on in Settings → Notifications, then open **System Settings → Notifications → Notch Limits** and allow notifications (banner style). Notifications only work in the installed app, not when it runs unbundled with `swift run`.
 
