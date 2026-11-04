@@ -94,7 +94,7 @@ final class Store: ObservableObject {
     private let onRefresh: @MainActor ([Account], [String: Usage]) -> Void
 
     /// Fontes injetáveis para teste; o app usa as contas encontradas na home e do accounts.json e os leitores reais.
-    /// onRefresh recebe o uso final uma vez ao fim de cada atualização (o app passa o notificador, R-06)
+    /// onRefresh recebe o uso final uma vez ao fim de cada atualização (o app passa o notificador)
     init(accounts: [Account] = loadAccounts(from: configFile, home: home),
          local: @escaping (Account) -> Usage? = localUsage,
          remote: @escaping (Account) async throws -> Usage = remoteUsage,
@@ -162,7 +162,7 @@ final class Store: ObservableObject {
         let calledAPI: Bool
     }
 
-    /// O Retry-After vale mesmo se a conta foi escondida durante a chamada (D-005);
+    /// O Retry-After vale mesmo se a conta foi escondida durante a chamada;
     /// o uso só é gravado se a conta ainda está na lista
     private func record(_ outcome: Outcome, previous: Usage?) {
         if outcome.calledAPI, let wait = (outcome.error as? UsageError)?.retryAfter {
@@ -176,8 +176,8 @@ final class Store: ObservableObject {
         usage[outcome.id] = updated
     }
 
-    /// Troca a lista na hora (Ajustes) e só relê os arquivos locais, sem nenhuma requisição (D-002).
-    /// O uso de contas que saíram é descartado; o backoff fica, para esconder e mostrar não furar o Retry-After (D-005)
+    /// Troca a lista na hora (Ajustes) e só relê os arquivos locais, sem nenhuma requisição.
+    /// O uso de contas que saíram é descartado; o backoff fica, para esconder e mostrar não furar o Retry-After
     @discardableResult
     func setAccounts(_ list: [Account]) -> Task<Void, Never> {
         accounts = list.filter(\.enabled)
@@ -203,7 +203,7 @@ func setLaunchAtLogin(_ enabled: Bool) {
     }
 }
 
-/// Níveis de alerta: laranja a partir de 70%; vermelho e notificação (R-06) a partir de 90%
+/// Níveis de alerta: laranja a partir de 70%; vermelho e notificação a partir de 90%
 let warningLevel: Double = 70
 let nearLimitLevel: Double = 90
 
@@ -228,7 +228,7 @@ func resetText(_ date: Date?, short: Bool = false, countdown: Bool = false) -> S
     return short ? when : tr("resets \(when)", "reseta \(when)", "se reinicia \(when)")
 }
 
-/// "hoje 16:20", "amanhã 09:00", "ter 14:00" (12h/24h conforme o idioma); usado no reset e no ritmo (R-08)
+/// "hoje 16:20", "amanhã 09:00", "ter 14:00" (12h/24h conforme o idioma); usado no reset e no ritmo
 func dayTimeText(_ date: Date) -> String {
     // arredonda pro minuto mais próximo (a API manda 00:59:59.9 para resets "às 01:00")
     let rounded = Date(timeIntervalSince1970: (date.timeIntervalSince1970 / 60).rounded() * 60)

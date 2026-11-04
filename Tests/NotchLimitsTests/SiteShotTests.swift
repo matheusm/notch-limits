@@ -4,7 +4,7 @@ import Testing
 
 // Prints do app para o site: os dados de exemplo dos Snapshots, sobre o --ground-lift do site (#101215) para o PNG se
 // fundir com a moldura da página. O inglês vem do processo (-AppleLanguages), por isso rode só via scripts/site-shots.sh.
-// Ferramenta, não gate: sem SNAPSHOT_DIR a suíte não roda (D-023).
+// Ferramenta, não gate: sem SNAPSHOT_DIR a suíte não roda.
 
 @MainActor
 @Suite("SiteShots", .enabled(if: ProcessInfo.processInfo.environment["SNAPSHOT_DIR"] != nil), .serialized)

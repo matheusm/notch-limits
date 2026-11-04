@@ -1,7 +1,7 @@
 import SwiftUI
 
-// Linguagem visual do app (DESIGN.md › App). O painel do notch é a referência: toda superfície usa estes tokens
-// e componentes, nunca o estilo padrão do sistema (Form, switch, picker e campo com borda, modo claro), D-023
+// Linguagem visual do app. O painel do notch é a referência: toda superfície usa estes tokens
+// e componentes, nunca o estilo padrão do sistema (Form, switch, picker e campo com borda, modo claro)
 
 enum Theme {
     // MARK: Cores: só neutros; cor aparece só como estado (alertColor, 70/90%)

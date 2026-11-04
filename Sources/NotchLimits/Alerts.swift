@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 
-// Avisos de limite (R-06, D-015): perto do limite (90%) e "disponível de novo" quando uma janela em 90%+ reseta.
+// Avisos de limite: perto do limite (90%) e "disponível de novo" quando uma janela em 90%+ reseta.
 // A regra é uma função pura; a Central de Notificações fica na borda, em SystemNotifications
 
 struct AlertKey: Hashable {
@@ -119,7 +119,7 @@ func notice(for alert: LimitAlert, accounts: [Account], usage: [String: Usage]) 
 
 // MARK: - Notificador
 
-/// Chave do toggle nos Ajustes (UserDefaults, ao lado de showNotch); ausente = desligado (D-015)
+/// Chave do toggle nos Ajustes (UserDefaults, ao lado de showNotch); ausente = desligado
 let notifyLimitsKey = "notifyLimits"
 
 /// Guarda o estado entre atualizações do Store e posta os avisos

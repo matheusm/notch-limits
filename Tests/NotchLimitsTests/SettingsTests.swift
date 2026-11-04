@@ -116,7 +116,7 @@ struct SettingsTests {
         #expect(settings.saveError != nil)
     }
 
-    /// QA do R-05: a engrenagem relê o disco, então o erro de uma gravação anterior não vale mais
+    /// A engrenagem relê o disco, então o erro de uma gravação anterior não vale mais
     @Test func rereadingTheFileClearsAnOldSaveError() {
         home.write(".config", "a file where the folder should be")
         let settings = makeSettings(Applied())

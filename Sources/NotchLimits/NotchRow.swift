@@ -24,7 +24,7 @@ struct NotchAccountRow: View {
                         Tag(plan)
                     }
                     if isBest {
-                        // estado, não plano: visual do chip selecionado, sem cor nova (cor só para alerta, D-016)
+                        // estado, não plano: visual do chip selecionado, sem cor nova (cor só para alerta)
                         Tag(bestNowLabel, filled: true).help(bestNowHelp(account.provider))
                     }
                     Spacer()
@@ -58,7 +58,7 @@ struct NotchAccountRow: View {
 }
 
 extension NotchAccountRow {
-    /// Colunas de largura fixa para as barras alinharem entre contas. O ritmo (R-08) usa Date() aqui, na borda;
+    /// Colunas de largura fixa para as barras alinharem entre contas. O ritmo usa Date() aqui, na borda;
     /// o painel redesenha a cada atualização (60 s), o bastante para um texto com minutos
     private func windowRows(_ usage: Usage) -> some View {
         let now = Date()
@@ -78,7 +78,7 @@ extension NotchAccountRow {
                             .frame(width: 96, alignment: .trailing)
                     }
                     if let limitAt = windowPace?.limitAt {
-                        // a cor que a janela já tem: as palavras são o sinal, nunca uma cor nova (D-017)
+                        // a cor que a janela já tem: as palavras são o sinal, nunca uma cor nova
                         Text(paceText(limitAt)).font(Theme.caption)
                             .foregroundStyle(alertColor(for: limit.percent) ?? Theme.dim)
                             .padding(.leading, 56)   // alinhada à borda da barra: rótulo de 46 + espaço de 10

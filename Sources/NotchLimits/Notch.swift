@@ -30,9 +30,9 @@ final class NotchModel: ObservableObject {
 struct NotchView: View {
     @ObservedObject var store: Store
     @ObservedObject var model: NotchModel
-    /// Engrenagem: o controller recolhe o notch antes de abrir os Ajustes (critério 13 do R-05)
+    /// Engrenagem: o controller recolhe o notch antes de abrir os Ajustes, para a janela não ficar sob o painel
     let openSettings: () -> Void
-    /// Lidos a cada expansão; os snapshots injetam os seus (D-023)
+    /// Lidos a cada expansão; os snapshots injetam os seus
     var launchAtLogin: () -> Bool = { SMAppService.mainApp.status == .enabled }
     var defaults = UserDefaults.standard
 
@@ -91,7 +91,7 @@ struct NotchDetailView: View {
     @State private var launchAtLogin: Bool
     @AppStorage private var showNotch: Bool
 
-    /// Login e defaults entram por fora para os snapshots não lerem o sistema (D-023)
+    /// Login e defaults entram por fora para os snapshots não lerem o sistema
     init(store: Store,
          openSettings: @escaping () -> Void,
          launchAtLogin: Bool = SMAppService.mainApp.status == .enabled,
@@ -166,7 +166,7 @@ struct HoverState {
     }
 
     /// Abrir uma janela recolhe na hora, para ela não ficar sob o painel; só expande de novo quando o ponteiro
-    /// sair da área e voltar (D-023)
+    /// sair da área e voltar
     mutating func dismiss() {
         set(false)
         heldClosed = true

@@ -29,7 +29,7 @@ struct FormattingTests {
         #expect(resetText(at11.addingTimeInterval(-0.1), short: true) == text)
     }
 
-    /// R-08: a linha do ritmo usa o mesmo dia e hora do reset ("amanhã 11:00"), extraído em dayTimeText
+    /// A linha do ritmo usa o mesmo dia e hora do reset ("amanhã 11:00"), extraído em dayTimeText
     @Test func paceLineUsesTheResetDayAndTimeFormat() throws {
         let cal = Calendar.current
         let tomorrow = try #require(cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: Date())))

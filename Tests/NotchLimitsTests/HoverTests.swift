@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import NotchLimits
 
-/// Critério 13 do R-05 (D-023): abrir os Ajustes pela engrenagem recolhe o notch, que só expande de novo
+/// Abrir os Ajustes pela engrenagem recolhe o notch, que só expande de novo
 /// depois que o ponteiro sai da área e volta
 @Suite("Notch hover")
 struct HoverTests {

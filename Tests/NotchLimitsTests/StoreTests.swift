@@ -110,7 +110,7 @@ struct StoreTests {
         #expect(store.usage[account.id]?.visibleError == "Token expired")
     }
 
-    /// R-06: o notificador recebe o uso final uma vez por atualização, não uma vez por conta
+    /// O notificador recebe o uso final uma vez por atualização, não uma vez por conta
     @Test func refreshReportsTheFinalUsageOnce() async {
         let other = other
         let reports = Reports()
@@ -163,13 +163,13 @@ struct StoreTests {
 
         #expect(store.usage[other.id] == nil)
         #expect(store.usage[account.id]?.peak == 50)
-        // o uso some, mas o Retry-After continua valendo quando ela volta (D-005)
+        // o uso some, mas o Retry-After continua valendo quando ela volta
         await store.setAccounts([account, other]).value
         await store.refresh(force: true)
         #expect(calls.value == 3)
     }
 
-    /// Esconder e mostrar de novo nos Ajustes não fura o Retry-After (D-005)
+    /// Esconder e mostrar de novo nos Ajustes não fura o Retry-After
     @Test func hidingAndShowingAnAccountKeepsItsBackoff() async {
         let store = makeStore(local: usage(minutesAgo: 11, percent: 20)) {
             throw UsageError("rate limited", retryAfter: 300)
@@ -279,7 +279,7 @@ struct UsageTests {
         #expect(Usage(error: "x").visibleError == "x")
     }
 
-    /// R-06: o relógio é injetado; com exatamente 15 min ainda vale, sem janelas ou sem data não vale
+    /// O relógio é injetado; com exatamente 15 min ainda vale, sem janelas ou sem data não vale
     @Test func usableMeansWindowsAndAtMostFifteenMinutesOld() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let read = { (minutesAgo: Double) in Usage(windows: [window(.weekly)], updatedAt: now.addingTimeInterval(-minutesAgo * 60)) }

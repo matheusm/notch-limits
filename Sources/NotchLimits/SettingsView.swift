@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Ajustes no visual do painel do notch (D-023): fundo preto, chips, botões de ícone, separadores e texto apagado,
+// Ajustes no visual do painel do notch: fundo preto, chips, botões de ícone, separadores e texto apagado,
 // todos de Theme.swift. Nada de Form, switch, picker ou campo com borda
 
 struct SettingsView: View {

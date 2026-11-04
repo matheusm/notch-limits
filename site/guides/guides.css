@@ -1,4 +1,4 @@
-/* Guides: same world as the home page (DESIGN.md). Tokens mirror site/index.html :root. */
+/* Guides: same world as the home page. Tokens mirror site/index.html :root. */
 :root {
   --ground: #060708;
   --ground-lift: #101215;
@@ -173,7 +173,7 @@ td:first-child { color: var(--ink); font-weight: 500; }
 .copy:hover { background: rgba(255, 255, 255, .14); }
 .doc .fine { font-size: 13.5px; line-height: 1.6; margin-top: 16px; }
 
-/* índice /guides: linhas separadas por hairline, sem cards, sombras ou ícones (DESIGN.md › Guide list) */
+/* índice /guides: linhas separadas por hairline, sem cards, sombras ou ícones */
 .doc .guide-list { list-style: none; padding: 0; margin: 40px 0 0; display: block; border-top: 1px solid var(--hair); }
 .doc .guide-list li { padding: 22px 0; border-bottom: 1px solid var(--hair); }
 .doc .guide-list h2 { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.3; letter-spacing: -.015em; font-weight: 600; }
@@ -201,7 +201,7 @@ footer [aria-current] { color: var(--ink); }
   .menubar .item { display: none; }
 }
 @media (max-width: 520px) {
-  /* o vão do notch encolhe até o "Download" da barra caber ao lado (F-3, D-022):
+  /* o vão do notch encolhe até o "Download" da barra caber ao lado:
      100vw − 2 × (margem 10 + Download ~78 + orelha 50 + folga 8). Igual em site/index.html */
   :root { --notch-w: clamp(28px, 100vw - 292px, 92px); --ear: 50px; }
   .menubar { padding-inline: 10px; }

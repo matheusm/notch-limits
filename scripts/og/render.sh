@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gera os cards sociais em site/og/ (D-028). Rode de novo depois de mudar um título ou adicionar um guia.
+# Gera os cards sociais em site/og/. Rode de novo depois de mudar um título ou adicionar um guia.
 # Precisa do Google Chrome instalado e de rede: a Geist vem do Google Fonts, como no site.
 #   scripts/og/render.sh
 set -euo pipefail
@@ -48,7 +48,7 @@ chrome() {
 
 to_jpeg() { sips -s format jpeg -s formatOptions 80 "$1" --out "$2" >/dev/null; }
 
-# tamanho exato e teto de bytes (D-028): falha em vez de publicar um card fora do padrão
+# tamanho exato e teto de bytes: falha em vez de publicar um card fora do padrão
 check() {
   local f="$1" w h bytes
   w=$(sips -g pixelWidth "$f" | awk '/pixelWidth/ { print $2 }')

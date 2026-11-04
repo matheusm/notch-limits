@@ -5,7 +5,7 @@ import UserNotifications
 @testable import NotchLimits
 
 // Renderiza cada superfície do app em PNG, fora da tela, com dados de exemplo, para agentes verem a UI sem gravar a tela.
-// É uma ferramenta, não um gate: sem SNAPSHOT_DIR a suíte não roda (D-023).
+// É uma ferramenta, não um gate: sem SNAPSHOT_DIR a suíte não roda.
 // SNAPSHOT_DIR=.evidence/snapshots/<item> swift test --filter Snapshots
 
 private let snapshotDir = ProcessInfo.processInfo.environment["SNAPSHOT_DIR"]

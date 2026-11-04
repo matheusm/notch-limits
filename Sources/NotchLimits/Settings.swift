@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 
 // Ajustes: todas as contas, encontradas ou configuradas, com mostrar/esconder, ícone, nome e ordem.
-// Cada mudança confirmada grava o accounts.json e vale na hora, sem botão de salvar (D-014)
+// Cada mudança confirmada grava o accounts.json e vale na hora, sem botão de salvar
 
 /// Lista editada nos Ajustes; grava e aplica a cada mudança confirmada
 @MainActor
@@ -78,7 +78,7 @@ final class AccountSettings: ObservableObject {
     }
 }
 
-/// Toggle das notificações (R-06): a permissão só é pedida quando o usuário liga, nunca no launch nem num refresh
+/// Toggle das notificações: a permissão só é pedida quando o usuário liga, nunca no launch nem num refresh
 @MainActor
 final class NotificationSettings: ObservableObject {
     @Published private(set) var isOn: Bool          // o que o toggle mostra (ligado também com o pedido na tela)
@@ -174,7 +174,7 @@ final class SettingsWindow {
         return window
     }
 
-    /// A mesma janela que o app abre; os snapshots renderizam esta (D-023).
+    /// A mesma janela que o app abre; os snapshots renderizam esta.
     /// Preta como o painel: barra de título transparente sobre o fundo preto e sem título (os botões de janela ficam,
     /// Cmd+W fecha); o tamanho segue o conteúdo, sem redimensionar. Sem fullSizeContentView: o conteúdo já fica abaixo
     /// dos botões, e com ele o cacheDisplay dos snapshots não desenha o SwiftUI

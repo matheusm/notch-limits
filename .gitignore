@@ -2,7 +2,5 @@
 .swiftpm/
 .DS_Store
 dist/
-.impeccable/review/
 .vercel
 .evidence/
-.claude/worktrees/

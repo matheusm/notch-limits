@@ -1,8 +1,8 @@
 import Foundation
 
-// Sinais calculados sobre o uso para decidir o que fazer agora (R-07 "melhor agora"; o ritmo do R-08 entra aqui)
+// Sinais calculados sobre o uso para decidir o que fazer agora: "melhor agora" e ritmo
 
-/// "Melhor agora" (D-016): por provedor, a conta com o menor pico exibido entre as que têm dado útil.
+/// "Melhor agora": por provedor, a conta com o menor pico exibido entre as que têm dado útil.
 /// Precisa de duas candidatas ou mais (nunca chama de melhor contra uma conta que não dá para ver);
 /// empate no menor valor ou todas em 100% não marcam ninguém. Claude e Codex nunca se comparam
 func bestAccountIDs(accounts: [Account], usage: [String: Usage], now: Date) -> Set<String> {
@@ -31,7 +31,7 @@ func bestNowHelp(_ provider: Provider) -> String {
     )
 }
 
-// MARK: - Ritmo (R-08, D-017)
+// MARK: - Ritmo
 
 extension LimitWindow {
     /// Tamanho da janela pelo tipo; nil quando é desconhecido (Codex sem window_minutes vira sessão de 0 h)
@@ -49,7 +49,7 @@ struct Pace: Equatable {
     let limitAt: Date?     // quando o ritmo atual chega a 100%, só se for antes do reset
 }
 
-/// No começo da janela uma rajada só projeta números absurdos: sem projeção antes de 15% dela (D-017)
+/// No começo da janela uma rajada só projeta números absurdos: sem projeção antes de 15% dela
 let paceMinElapsed = 0.15
 
 /// Projeção linear desde o início da janela (resetsAt − duração), sem histórico.

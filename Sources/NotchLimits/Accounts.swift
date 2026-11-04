@@ -1,8 +1,8 @@
 import Foundation
 
 // MARK: - Contas
-// Encontradas em ~/.claude* e ~/.codex* (D-013) e mescladas com ~/.config/notch-limits/accounts.json,
-// que os Ajustes também gravam (D-014)
+// Encontradas em ~/.claude* e ~/.codex* e mescladas com ~/.config/notch-limits/accounts.json,
+// que os Ajustes também gravam
 
 enum Provider {
     case claude(configDir: String)   // dir passado em CLAUDE_CONFIG_DIR (~/.claude = conta padrão)
@@ -106,7 +106,7 @@ extension Account {
 
 // MARK: - Descoberta
 
-/// Só olha os filhos diretos da home e checa se os arquivos-marca existem (D-013):
+/// Só olha os filhos diretos da home e checa se os arquivos-marca existem:
 /// não lê conteúdo, rc do shell nem Keychain
 func discoverAccounts(home: String) -> [Account] {
     let fm = FileManager.default
